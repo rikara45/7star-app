@@ -67,6 +67,8 @@ Route::middleware(['auth', 'role:jurusan'])->group(function () {
     // Detail & Aksi
     Route::get('/jurusan/verifikasi/{userId}', [JurusanController::class, 'show'])->name('jurusan.verifikasi.show');
     Route::post('/jurusan/nilai/{portfolioId}', [JurusanController::class, 'storeScore'])->name('jurusan.nilai.store');
+
+    Route::get('/jurusan/hasil/{userId}', [JurusanController::class, 'viewResult'])->name('jurusan.result');
 });
 
 // 3. Route Khusus DOSEN (Target)

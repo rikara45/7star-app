@@ -26,26 +26,24 @@ class JurusanController extends Controller
     // 2. HALAMAN LIST VERIFIKASI (Tabel Dosen)
     public function verificationIndex(Request $request)
     {
-        // Mulai Query User Dosen
         $query = User::where('role', 'dosen')
-            // Hitung jumlah portofolio pending per dosen
             ->withCount(['portfolios as pending_count' => function($q){
                 $q->where('status', 'uploaded');
+            }])
+            // Eager Load analisis terakhir agar kita tahu dosen ini sudah ada hasil atau belum
+            ->with(['aiAnalyses' => function($q) {
+                $q->latest();
             }]);
 
-        // FITUR 1: Pencarian Nama
+        // Search & Filter (Logika Lama Tetap Dipakai)
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
-
-        // FITUR 2: Filter Status (Hanya yang butuh verifikasi / Semua)
         if ($request->status == 'pending') {
-            // Ambil dosen yang punya minimal 1 pending item
             $query->having('pending_count', '>', 0);
         }
 
-        // Urutkan: Yang paling banyak pending-nya ditaruh paling atas
-        $dosens = $query->orderBy('pending_count', 'desc')->paginate(10); // Pakai Pagination biar ringan
+        $dosens = $query->orderBy('pending_count', 'desc')->paginate(10);
 
         return view('jurusan.verifikasi.index', compact('dosens'));
     }
@@ -85,5 +83,19 @@ class JurusanController extends Controller
 
         // Fallback untuk non-javascript (tetap redirect)
         return back()->with('success', 'Nilai berhasil disimpan.');
+    }
+
+    public function viewResult($userId)
+    {
+        $dosen = User::findOrFail($userId);
+        
+        // Ambil analisis terakhir milik dosen tersebut
+        $analysis = \App\Models\AiAnalysis::where('user_id', $userId)->latest()->first();
+
+        if (!$analysis) {
+            return back()->with('error', 'Dosen ini belum melakukan proses analisis hasil.');
+        }
+
+        return view('jurusan.verifikasi.result', compact('dosen', 'analysis'));
     }
 }
