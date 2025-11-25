@@ -37,6 +37,9 @@ Route::middleware('auth')->group(function () {
 
     // Halaman Hasil Akhir
     Route::get('/hasil-penilaian', [UserDashboardController::class, 'showResult'])->name('result.show');
+
+    // Route untuk batalkan undangan
+    Route::delete('/cancel-invite/{id}', [UserDashboardController::class, 'destroyRequest'])->name('invite.destroy');
 });
 
 // 1. Route Khusus ADMIN

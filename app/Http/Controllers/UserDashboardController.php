@@ -22,7 +22,7 @@ class UserDashboardController extends Controller
     // =========================================================================
     private function calculateRealtimeScores($user, $period)
     {
-        // 1. HITUNG SKOR 360 (Metode Bobot Berimbang)
+        // 1. HITUNG SKOR 360 (Metode Bobot Berimbang: Rata-rata per Role)
         $rawScores = DB::table('assessment_responses')
             ->join('assessment_requests', 'assessment_responses.assessment_request_id', '=', 'assessment_requests.id')
             ->join('master_questions', 'assessment_responses.master_question_id', '=', 'master_questions.id')
@@ -45,6 +45,7 @@ class UserDashboardController extends Controller
             $finalDimensionScores = [];
 
             foreach ($groupedByDimension as $dimension => $items) {
+                // Rata-rata dari semua grup penilai yang ada di dimensi ini
                 $finalDimensionScores[$dimension] = $items->avg('avg_score');
             }
 
@@ -58,7 +59,7 @@ class UserDashboardController extends Controller
 
         // 2. HITUNG SKOR PORTOFOLIO
         $portfolios = Portfolio::where('user_id', $user->id)->get();
-        $portfolioScore = min($portfolios->sum('score'), 100);
+        $portfolioScore = min($portfolios->sum('score'), 100); // Cap di 100
 
         // 3. HITUNG SKOR AKHIR
         $finalScore = number_format(($behaviorScore100 * 0.70) + ($portfolioScore * 0.30), 2);
@@ -100,16 +101,16 @@ class UserDashboardController extends Controller
                     ->get();
         $selfRequest = $requests->where('relationship', 'self')->first();
 
-        // Hitung Undangan
+        // Hitung Undangan (Total & Completed)
         $countSuperior = $requests->where('relationship', 'superior')->count();
         $countPeer = $requests->where('relationship', 'peer')->count();
         
-        // Validasi Status
-        $isSelfDone = $selfRequest && $selfRequest->is_completed;
-        $pendingAssessorsCount = $requests->where('relationship', '!=', 'self')
-                                          ->where('is_completed', false)
-                                          ->count();
+        $completedSuperior = $requests->where('relationship', 'superior')->where('is_completed', true)->count();
+        $completedPeer = $requests->where('relationship', 'peer')->where('is_completed', true)->count();
 
+        // Validasi Status Self
+        $isSelfDone = $selfRequest && $selfRequest->is_completed;
+        
         // 2. Ambil Data Portofolio (Pakai Fungsi Privat)
         $categories = PortfolioController::getCategories();
         $realtimeData = $this->calculateRealtimeScores($user, $period);
@@ -118,8 +119,19 @@ class UserDashboardController extends Controller
         $currentPortfolioScore = $realtimeData['portfolioScore'];
 
         // Status Upload
-        $pendingCount = $myPortfolios->where('status', 'uploaded')->count();
-        $missingCount = count($categories) - $myPortfolios->count();
+        $uploadedPortfolioCount = $myPortfolios->count();
+        $pendingCount = $myPortfolios->where('status', 'uploaded')->count(); // Menunggu Jurusan
+        $missingCount = count($categories) - $uploadedPortfolioCount;
+
+        // --- SYARAT MINIMAL (VALIDASI KETAT) ---
+        // 1. Self Selesai
+        // 2. Min 1 Atasan Selesai
+        // 3. Min 3 Sejawat Selesai
+        // 4. Min 3 Portofolio Diupload
+        $isMinRequirementsMet = $isSelfDone 
+                                && ($completedSuperior >= 1) 
+                                && ($completedPeer >= 3)
+                                && ($uploadedPortfolioCount >= 3);
 
         // --- CEK PERUBAHAN DATA (CHANGE DETECTION) ---
         $lastAnalysis = AiAnalysis::where('user_id', $user->id)
@@ -127,14 +139,15 @@ class UserDashboardController extends Controller
                         ->latest()
                         ->first();
 
-        $hasDataChanged = true; // Default tombol muncul
+        $hasDataChanged = true; // Default: Tombol Proses Muncul
 
+        // Jika data lama ada DAN skornya sama persis -> Berarti TIDAK BERUBAH
         if ($lastAnalysis && 
             abs($lastAnalysis->score_behavior - $realtimeData['behaviorScore100']) < 0.01 && 
             abs($lastAnalysis->score_portfolio - $realtimeData['portfolioScore']) < 0.01 &&
             !empty($lastAnalysis->ai_narrative)) {
             
-            $hasDataChanged = false; // Data sama -> Tombol jadi "Lihat Hasil"
+            $hasDataChanged = false; // Tombol jadi "Lihat Hasil"
         }
 
         return view('dashboard_7stars', compact(
@@ -142,11 +155,15 @@ class UserDashboardController extends Controller
             'myPortfolios', 'categories', 'currentPortfolioScore',
             'pendingCount', 'missingCount',
             'countSuperior', 'countPeer',
-            'isSelfDone', 'pendingAssessorsCount',
-            'hasDataChanged'
+            'isSelfDone', 'hasDataChanged',
+            // Variabel Syarat Minimal
+            'isMinRequirementsMet', 'completedSuperior', 'completedPeer', 'uploadedPortfolioCount'
         ));
     }
 
+    // =========================================================================
+    // UNDANG PENILAI
+    // =========================================================================
     public function invite(Request $request)
     {
         $request->validate([
@@ -193,16 +210,31 @@ class UserDashboardController extends Controller
     }
 
     // =========================================================================
-    // PROSES HASIL & AI (PAKAI KODE GEMINI FLASH 2.0 ANDA)
+    // HAPUS UNDANGAN (CANCEL INVITE)
+    // =========================================================================
+    public function destroyRequest($id)
+    {
+        $request = AssessmentRequest::findOrFail($id);
+
+        if ($request->user_id != Auth::id()) abort(403);
+        
+        if ($request->is_completed) {
+            return back()->with('error', 'Tidak bisa membatalkan penilaian yang sudah selesai.');
+        }
+
+        $request->delete();
+        return back()->with('success', 'Undangan berhasil dibatalkan.');
+    }
+
+    // =========================================================================
+    // PROSES HASIL & AI (GEMINI 2.0 FLASH + TIMEOUT 20S)
     // =========================================================================
     public function generateResult()
     {
         $user = Auth::user();
         $period = AssessmentPeriod::where('is_active', true)->first();
 
-        if (!$period) {
-            return back()->with('error', 'Tidak ada periode aktif.');
-        }
+        if (!$period) return back()->with('error', 'Tidak ada periode aktif.');
 
         // 1. Ambil Data Realtime
         $data = $this->calculateRealtimeScores($user, $period);
@@ -221,7 +253,7 @@ class UserDashboardController extends Controller
             return redirect()->route('result.show');
         }
 
-        // 3. Siapkan Prompt (Termasuk Portofolio)
+        // 3. Siapkan Prompt Portofolio
         $allCategories = PortfolioController::getCategories();
         $portfolioStringLines = [];
 
@@ -236,9 +268,9 @@ class UserDashboardController extends Controller
         }
         $portfolioDetailString = implode("\n", $portfolioStringLines);
 
-        // --- BAGIAN INTEGRASI AI (KODE MILIK ANDA) ---
-        $aiNarrative = "Analisis sedang diproses..."; // Placeholder awal
-
+        // --- INTEGRASI AI (GEMINI 2.0 FLASH) ---
+        $aiNarrative = null; // Inisialisasi NULL agar aman
+        
         $prompt = "Bertindaklah sebagai Konsultan SDM Universitas profesional. 
         DATA PROFIL:
         Nama: {$user->name}
@@ -260,8 +292,7 @@ class UserDashboardController extends Controller
             $apiKey = env('GEMINI_API_KEY');
 
             if ($apiKey) {
-                // PANGGIL API (MODEL GEMINI 2.0 FLASH SESUAI REQUEST)
-                // Menggunakan Timeout 20 Detik
+                // HTTP Client Laravel (Timeout 20 Detik)
                 $response = Http::timeout(20) 
                     ->connectTimeout(10)      
                     ->withoutVerifying()
@@ -279,18 +310,15 @@ class UserDashboardController extends Controller
             }
 
         } catch (ConnectionException $e) {
-            // JIKA WAKTU HABIS (> 20 DETIK)
-            $aiNarrative = "Waktu analisis habis (timeout > 20 detik). Silakan coba lagi.";
+            $aiNarrative = "Waktu analisis habis (timeout > 20 detik). Silakan coba lagi nanti.";
             Log::error('Gemini Timeout: ' . $e->getMessage());
             
         } catch (\Exception $e) {
-            // JIKA ERROR LAIN
             Log::error('Gemini API Error: ' . $e->getMessage());
-            // Tetap lanjut dengan pesan default
         }
 
-        // SAFETY NET: Jika masih "Analisis sedang diproses...", ganti jadi pesan error sopan
-        if ($aiNarrative === "Analisis sedang diproses...") {
+        // Safety Net
+        if (empty($aiNarrative)) {
              $aiNarrative = "Analisis AI belum tersedia saat ini. Namun skor Anda telah berhasil dihitung dan disimpan.";
         }
 
