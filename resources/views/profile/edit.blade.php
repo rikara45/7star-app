@@ -8,10 +8,12 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             
-            {{-- LOGIC: Cek Role User --}}
+            {{-- BAGIAN 1: EDIT INFORMASI PROFIL (NAMA & EMAIL) --}}
+            {{-- Logic: Hanya Admin yang boleh edit. Dosen/Jurusan hanya lihat (Read Only). --}}
+            
             @if(Auth::user()->role === 'admin')
                 
-                {{-- JIKA ADMIN: Tampilkan Form Edit Profil (Nama/Email) --}}
+                {{-- JIKA ADMIN: Tampilkan Form Edit --}}
                 <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                     <div class="max-w-xl">
                         @include('profile.partials.update-profile-information-form')
@@ -32,13 +34,13 @@
                             <svg class="w-5 h-5 text-blue-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <div>
                                 <p class="text-sm text-gray-600">
-                                    Jika terdapat kesalahan data pada akun Anda (Nama/Email), silakan hubungi Admin.
+                                    Jika terdapat kesalahan data pada akun Anda, silakan hubungi Admin.
                                 </p>
-                                
+                            
                             </div>
                         </div>
 
-                        {{-- Tampilkan Data Read-Only agar user bisa melihat isinya --}}
+                        {{-- Tampilkan Data Read-Only --}}
                         <div class="mt-6 space-y-4 opacity-75">
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Nama Lengkap</label>
@@ -54,24 +56,15 @@
 
             @endif
 
-            {{-- SEMUA USER: Tetap Boleh Ganti Password Sendiri --}}
+            {{-- BAGIAN 2: GANTI PASSWORD (SEMUA USER BOLEH) --}}
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <div class="max-w-xl">
                     @include('profile.partials.update-password-form')
                 </div>
             </div>
 
-            {{-- LOGIC: Hapus Akun --}}
-            @if(Auth::user()->role === 'admin')
-                
-                {{-- JIKA ADMIN: Boleh Hapus Akun --}}
-                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.delete-user-form')
-                    </div>
-                </div>
-
-            @endif
+            {{-- BAGIAN 3: HAPUS AKUN (DIHILANGKAN TOTAL) --}}
+            {{-- Kode untuk delete-user-form sudah dihapus dari sini agar tidak ada yang bisa hapus akun sendiri. --}}
             
         </div>
     </div>

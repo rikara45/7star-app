@@ -14,7 +14,7 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-2xl border-t-8 border-teal-400 relative mb-8">
-                <div class="p-8 text-center">
+<div class="p-8 text-center">
                     <h3 class="text-gray-500 font-bold tracking-widest uppercase text-sm">Klasifikasi Akhir</h3>
                     
                     <div class="my-6">
@@ -63,7 +63,6 @@
                             @php
                                 $rawText = $analysis->ai_narrative;
                                 $rawText = preg_replace('/(\s+)([1-9]\.\s)/', "\n\n$2", $rawText);
-                                $rawText = preg_replace('/(\n\n)([1-9]\..+?:)/', "$1**$2**", $rawText);
                             @endphp
                             {!! Str::markdown($rawText) !!}
                         </div>

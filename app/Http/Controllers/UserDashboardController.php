@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http; 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AssessmentInvitation;
 
 class UserDashboardController extends Controller
 {
@@ -22,7 +24,6 @@ class UserDashboardController extends Controller
     // =========================================================================
     private function calculateRealtimeScores($user, $period)
     {
-        // 1. HITUNG SKOR 360 (Metode Bobot Berimbang: Rata-rata per Role)
         $rawScores = DB::table('assessment_responses')
             ->join('assessment_requests', 'assessment_responses.assessment_request_id', '=', 'assessment_requests.id')
             ->join('master_questions', 'assessment_responses.master_question_id', '=', 'master_questions.id')
@@ -39,13 +40,12 @@ class UserDashboardController extends Controller
 
         $behaviorScore100 = 0;
         $dimensionString = "Data penilaian 360 belum lengkap.";
+        $finalDimensionScores = []; // Array untuk menyimpan rincian
 
         if ($rawScores->isNotEmpty()) {
             $groupedByDimension = $rawScores->groupBy('dimension');
-            $finalDimensionScores = [];
 
             foreach ($groupedByDimension as $dimension => $items) {
-                // Rata-rata dari semua grup penilai yang ada di dimensi ini
                 $finalDimensionScores[$dimension] = $items->avg('avg_score');
             }
 
@@ -57,14 +57,12 @@ class UserDashboardController extends Controller
             })->implode("\n");
         }
 
-        // 2. HITUNG SKOR PORTOFOLIO
+        // Hitung Portofolio & Akhir
         $portfolios = Portfolio::where('user_id', $user->id)->get();
-        $portfolioScore = min($portfolios->sum('score'), 100); // Cap di 100
-
-        // 3. HITUNG SKOR AKHIR
+        $portfolioScore = min($portfolios->sum('score'), 100);
         $finalScore = number_format(($behaviorScore100 * 0.70) + ($portfolioScore * 0.30), 2);
 
-        // 4. TENTUKAN BINTANG
+        // Tentukan Bintang
         if ($finalScore >= 91) $stars = "7 Bintang";
         elseif ($finalScore >= 86) $stars = "6 Bintang";
         elseif ($finalScore >= 80) $stars = "5 Bintang";
@@ -79,7 +77,8 @@ class UserDashboardController extends Controller
             'finalScore' => $finalScore,
             'stars' => $stars,
             'dimensionString' => $dimensionString,
-            'portfolios' => $portfolios
+            'portfolios' => $portfolios,
+            'dimensionDetails' => $finalDimensionScores // <--- INI DATA BARU YG KITA BUTUHKAN
         ];
     }
 
@@ -197,7 +196,7 @@ class UserDashboardController extends Controller
             return back()->with('error', 'Email orang ini sudah Anda undang sebelumnya.');
         }
 
-        AssessmentRequest::create([
+        $newRequest = AssessmentRequest::create([
             'user_id' => $user->id,
             'assessment_period_id' => $period->id,
             'assessor_name' => $request->name,
@@ -206,7 +205,19 @@ class UserDashboardController extends Controller
             'access_token' => Str::random(32),
         ]);
 
-        return back()->with('success', 'Undangan penilaian berhasil dibuat!');
+        // --- TAMBAHAN BARU: KIRIM EMAIL ---
+        try {
+            Mail::to($request->email)->send(new AssessmentInvitation($newRequest));
+        } catch (\Exception $e) {
+            // Jika email gagal kirim (misal koneksi error), jangan crash, tapi catat log saja
+            // Aplikasi tetap lanjut sukses menyimpan data
+            Log::error('Gagal kirim email undangan: ' . $e->getMessage());
+            
+            // Opsional: Beri pesan sukses tapi ada catatan
+            return back()->with('success', 'Undangan dibuat, tapi Email gagal terkirim. Silakan bagikan Link Manual.');
+        }
+
+        return back()->with('success', 'Undangan berhasil dibuat & email telah dikirim!');
     }
 
     // =========================================================================
@@ -292,8 +303,8 @@ class UserDashboardController extends Controller
             $apiKey = env('GEMINI_API_KEY');
 
             if ($apiKey) {
-                // HTTP Client Laravel (Timeout 20 Detik)
-                $response = Http::timeout(20) 
+                // PERUBAHAN: Timeout dinaikkan jadi 60 detik
+                $response = Http::timeout(60) 
                     ->connectTimeout(10)      
                     ->withoutVerifying()
                     ->withHeaders(['Content-Type' => 'application/json'])
@@ -310,7 +321,8 @@ class UserDashboardController extends Controller
             }
 
         } catch (ConnectionException $e) {
-            $aiNarrative = "Waktu analisis habis (timeout > 20 detik). Silakan coba lagi nanti.";
+            // Update pesan errornya juga agar sesuai
+            $aiNarrative = "Waktu analisis habis (timeout > 60 detik). Silakan coba lagi nanti.";
             Log::error('Gemini Timeout: ' . $e->getMessage());
             
         } catch (\Exception $e) {
@@ -340,12 +352,20 @@ class UserDashboardController extends Controller
     public function showResult()
     {
         $user = Auth::user();
+        $period = AssessmentPeriod::where('is_active', true)->first(); // Pastikan ada period
+
+        // Ambil hasil simpanan DB
         $analysis = AiAnalysis::where('user_id', $user->id)->latest()->first();
 
         if (!$analysis) {
             return redirect()->route('dashboard.index')->with('error', 'Belum ada hasil. Silakan proses dulu.');
         }
 
-        return view('result_7stars', compact('analysis'));
+        // Hitung ulang rincian detail agar bisa ditampilkan di view
+        // (Kita hitung on-the-fly agar tidak perlu ubah struktur tabel database)
+        $realtimeData = $this->calculateRealtimeScores($user, $period);
+        $dimensionDetails = $realtimeData['dimensionDetails'];
+
+        return view('result_7stars', compact('analysis', 'dimensionDetails'));
     }
 }

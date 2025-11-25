@@ -287,7 +287,9 @@
                         <div class="relative w-20 h-20 mx-auto mb-4">
                             <div class="absolute inset-0 border-4 border-indigo-100 rounded-full animate-ping"></div>
                             <div class="absolute inset-0 border-4 border-t-indigo-600 border-r-transparent border-b-indigo-600 border-l-transparent rounded-full animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center"><svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">Sedang Menganalisis...</h3>
                         <p class="text-gray-500 text-sm">

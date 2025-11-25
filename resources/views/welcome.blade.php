@@ -79,21 +79,47 @@
                 <!-- Menu Desktop -->
                 <div class="hidden md:flex items-center space-x-6">
                     @if (Route::has('login'))
-                        @auth
-                            <a href="{{ url('/dashboard') }}" class="text-white hover:text-yellow-400 transition font-medium">
-                                Dashboard
+                <nav class="-mx-3 flex flex-1 justify-end">
+                    @auth
+                        {{-- LOGIKA PENENTUAN ARAH DASHBOARD --}}
+                        @php
+                            $targetRoute = 'dashboard.index'; // Default untuk Dosen
+                            
+                            if (Auth::user()->role === 'admin') {
+                                $targetRoute = 'admin.dashboard';
+                            } elseif (Auth::user()->role === 'jurusan') {
+                                $targetRoute = 'jurusan.dashboard';
+                            }
+                        @endphp
+
+                        <a
+                            href="{{ route($targetRoute) }}"
+                            class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white font-bold"
+                        >
+                            Kembali ke Dashboard ({{ ucfirst(Auth::user()->role) }})
+                        </a>
+                    @else
+                        <a
+                            href="{{ route('login') }}"
+                            class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                        >
+                            Log in
+                        </a>
+
+                        {{-- Sembunyikan Register jika Anda sudah menonaktifkannya --}}
+                        {{-- 
+                        @if (Route::has('register'))
+                            <a
+                                href="{{ route('register') }}"
+                                class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                            >
+                                Register
                             </a>
-                        @else
-                            <a href="{{ route('login') }}" class="text-white hover:text-yellow-400 transition font-medium">
-                                Login
-                            </a>
-                            {{-- @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="gold-gradient text-royal-900 px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all">
-                                    Register
-                                </a>
-                            @endif --}}
-                        @endauth
-                    @endif
+                        @endif 
+                        --}}
+                    @endauth
+                </nav>
+            @endif
                 </div>
                 
                 <!-- Mobile Menu Button -->
