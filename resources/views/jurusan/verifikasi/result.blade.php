@@ -62,11 +62,8 @@
                         <div class="text-gray-700 leading-relaxed text-justify [&>ul]:list-disc [&>ul]:ml-5 [&>ol]:list-decimal [&>ol]:ml-5 [&>p]:mb-4">
                             @php
                                 $rawText = $analysis->ai_narrative;
-                                $rawText = preg_replace('/(\.)\s*(Celah Kinerja)/i', "$1\n\n**$2**", $rawText);
-                                $rawText = preg_replace('/(\.)\s*(Gap)/i', "$1\n\n**$2**", $rawText);
-                                $rawText = preg_replace('/(\.)\s*(Rekomendasi)/i', "$1\n\n**$2**", $rawText);
-                                $rawText = preg_replace('/(\.)\s+([1-9]\.\s)/', "$1\n\n$2", $rawText);
-                                $rawText = str_replace('****', '**', $rawText);
+                                $rawText = preg_replace('/(\s+)([1-9]\.\s)/', "\n\n$2", $rawText);
+                                $rawText = preg_replace('/(\n\n)([1-9]\..+?:)/', "$1**$2**", $rawText);
                             @endphp
                             {!! Str::markdown($rawText) !!}
                         </div>
