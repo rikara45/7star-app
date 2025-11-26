@@ -33,6 +33,11 @@
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                             {{ __('Manajemen User') }}
                         </x-nav-link>
+
+                        {{-- TAMBAHKAN INI: MENU PENGATURAN --}}
+                        <x-nav-link :href="route('admin.settings.edit')" :active="request()->routeIs('admin.settings.*')">
+                            {{ __('Pengaturan Kampus') }}
+                        </x-nav-link>
                     @endif
 
                     {{-- Jika ingin menambah menu khusus di navbar, bisa pakai @if seperti ini --}}
@@ -109,6 +114,11 @@
             @if(Auth::user()->role === 'admin')
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                     {{ __('Manajemen User') }}
+                </x-responsive-nav-link>
+
+                {{-- TAMBAHKAN INI JUGA --}}
+                <x-responsive-nav-link :href="route('admin.settings.edit')" :active="request()->routeIs('admin.settings.*')">
+                    {{ __('Pengaturan Kampus') }}
                 </x-responsive-nav-link>
             @endif
         </div>

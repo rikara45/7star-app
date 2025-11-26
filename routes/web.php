@@ -57,6 +57,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/admin/users/{user}', [AdminController::class, 'update'])->name('admin.users.update'); // Simpan Perubahan
     
     Route::delete('/admin/users/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy'); // Hapus
+
+    // Setting Universitas
+    Route::get('/admin/settings', [App\Http\Controllers\UniversitySettingController::class, 'edit'])->name('admin.settings.edit');
+    Route::put('/admin/settings', [App\Http\Controllers\UniversitySettingController::class, 'update'])->name('admin.settings.update');
 });
 
 // 2. Route Khusus JURUSAN (diperbarui)
@@ -72,12 +76,17 @@ Route::middleware(['auth', 'role:jurusan'])->group(function () {
     Route::post('/jurusan/nilai/{portfolioId}', [JurusanController::class, 'storeScore'])->name('jurusan.nilai.store');
 
     Route::get('/jurusan/hasil/{userId}', [JurusanController::class, 'viewResult'])->name('jurusan.result');
+
+    // ROUTE BARU: Download PDF
+    Route::get('/jurusan/hasil/{userId}/pdf', [JurusanController::class, 'exportPdf'])->name('jurusan.result.pdf');
 });
 
 // 3. Route Khusus DOSEN (Target)
 Route::middleware(['auth', 'role:dosen'])->group(function () {
     // Pindahkan atau tambahkan route dashboard dosen di sini jika ingin membatasi akses hanya untuk role 'dosen'
     Route::get('/dashboard-penilaian', [UserDashboardController::class, 'index'])->name('dashboard.index');
+
+    Route::get('/hasil-penilaian/pdf', [UserDashboardController::class, 'exportPdf'])->name('result.pdf');
     // Tambahkan route lain untuk dosen sesuai kebutuhan (undang penilai, upload porto, proses hasil)...
 });
 

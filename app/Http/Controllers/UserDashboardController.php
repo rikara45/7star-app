@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AssessmentInvitation;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\UniversitySetting;
 
 class UserDashboardController extends Controller
 {
@@ -367,5 +369,28 @@ class UserDashboardController extends Controller
         $dimensionDetails = $realtimeData['dimensionDetails'];
 
         return view('result_7stars', compact('analysis', 'dimensionDetails'));
+    }
+
+    public function exportPdf()
+    {
+        $user = Auth::user();
+        
+        // Ambil Hasil Analisis
+        $analysis = AiAnalysis::where('user_id', $user->id)->latest()->first();
+        if (!$analysis) return back()->with('error', 'Belum ada hasil untuk dicetak.');
+
+        // Ambil Setting Kampus (Untuk Kop Surat)
+        $setting = UniversitySetting::first();
+
+        // Siapkan Data View (Mirip showResult tapi untuk PDF)
+        $period = AssessmentPeriod::where('is_active', true)->first();
+        $realtimeData = $this->calculateRealtimeScores($user, $period);
+        $dimensionDetails = $realtimeData['dimensionDetails'];
+
+        // Load View khusus PDF
+        $pdf = Pdf::loadView('pdf.report', compact('user', 'analysis', 'setting', 'dimensionDetails'));
+        
+        // Download
+        return $pdf->download('Laporan_Kepemimpinan_' . $user->name . '.pdf');
     }
 }

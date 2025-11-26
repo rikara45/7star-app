@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>7-Star Transformational Leadership Rating System</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,6 +19,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); /* Gradasi Emas */
+            color: #1a202c; /* Warna teks gelap (Royal 900 approximation) */
+        }
+        .text-royal-900 {
+            color: #0f172a; /* Biru sangat gelap */
+        }
+        /* Efek Hover agar makin berkilau */
+        .gold-gradient:hover {
+            background: linear-gradient(135deg, #FFE55C 0%, #FDC830 100%);
+        }
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -186,12 +200,32 @@
                 
                 <!-- CTA Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8 md:mt-20">
-                    <a href="{{ Route::has('login') ? route('login') : '#' }}" 
+                @auth
+                    {{-- 1. LOGIKA JIKA SUDAH LOGIN --}}
+                    @php
+                        $targetRoute = 'dashboard.index'; // Default Dosen
+                        if (Auth::user()->role === 'admin') {
+                            $targetRoute = 'admin.dashboard';
+                        } elseif (Auth::user()->role === 'jurusan') {
+                            $targetRoute = 'jurusan.dashboard';
+                        }
+                    @endphp
+
+                    <a href="{{ route($targetRoute) }}" 
+                       class="gold-gradient text-royal-900 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all inline-flex items-center space-x-2">
+                        <span>Lanjutkan ke Dashboard ({{ ucfirst(Auth::user()->role) }})</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                @else
+                    {{-- 2. LOGIKA JIKA BELUM LOGIN (TAMU) --}}
+                    <a href="{{ route('login') }}" 
                        class="gold-gradient text-royal-900 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all inline-flex items-center space-x-2">
                         <span>Mulai Penilaian Sekarang</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
-                    
+                @endauth
+            </div>
+
                 </div>
                 
                 <!-- Stats -->
