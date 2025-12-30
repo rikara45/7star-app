@@ -310,7 +310,7 @@ class UserDashboardController extends Controller
                     ->connectTimeout(10)      
                     ->withoutVerifying()
                     ->withHeaders(['Content-Type' => 'application/json'])
-                    ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}", [
+                    ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
                         'contents' => [['parts' => [['text' => $prompt]]]]
                     ]);
 
