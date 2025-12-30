@@ -47,6 +47,21 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+
+            // --- JURUS PAMUNGKAS MATIKAN SSL/TLS ---
+            'auto_tls' => false,            // <--- INI KUNCINYA (Tolak STARTTLS)
+            'verify_peer' => false,         // <--- Matikan verifikasi
+            'verify_peer_name' => false,    // <--- Matikan cek nama
+            // ----------------------------------------
+
+            // Cadangan setting stream (biarkan saja)
+            'stream' => [
+                'ssl' => [
+                    'allow_self_signed' => true,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ],
+            ],
         ],
 
         'ses' => [
