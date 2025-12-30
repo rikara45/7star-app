@@ -78,11 +78,9 @@
 </head>
 <body class="antialiased bg-gray-50">
     
-    <!-- Navbar -->
-    <nav class="fixed w-full z-50 transition-all duration-300" id="navbar">
+    <nav class="fixed w-full z-50 transition-all duration-300 bg-transparent" id="navbar">
         <div class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <!-- Logo -->
                 <a href="/" class="flex items-center space-x-2">
                     <div class="flex items-center">
                         <i class="fas fa-star text-yellow-400 text-2xl star-shimmer"></i>
@@ -90,74 +88,69 @@
                     </div>
                 </a>
                 
-                <!-- Menu Desktop -->
-                <div class="hidden md:flex items-center space-x-6">
+                <div class="hidden md:flex items-center space-x-4">
                     @if (Route::has('login'))
-                <nav class="-mx-3 flex flex-1 justify-end">
-                    @auth
-                        {{-- LOGIKA PENENTUAN ARAH DASHBOARD --}}
-                        @php
-                            $targetRoute = 'dashboard.index'; // Default untuk Dosen
-                            
-                            if (Auth::user()->role === 'admin') {
-                                $targetRoute = 'admin.dashboard';
-                            } elseif (Auth::user()->role === 'jurusan') {
-                                $targetRoute = 'jurusan.dashboard';
-                            }
-                        @endphp
+                        <nav class="-mx-3 flex flex-1 justify-end gap-2">
+                            @auth
+                                {{-- LOGIKA PENENTUAN ARAH DASHBOARD --}}
+                                @php
+                                    $targetRoute = 'dashboard.index'; 
+                                    if (Auth::user()->role === 'admin') $targetRoute = 'admin.dashboard';
+                                    elseif (Auth::user()->role === 'jurusan') $targetRoute = 'jurusan.dashboard';
+                                @endphp
 
-                        <a
-                            href="{{ route($targetRoute) }}"
-                            class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white font-bold"
-                        >
-                            Kembali ke Dashboard ({{ ucfirst(Auth::user()->role) }})
-                        </a>
-                    @else
-                        <a
-                            href="{{ route('login') }}"
-                            class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                        >
-                            Log in
-                        </a>
+                                <a
+                                    href="{{ route($targetRoute) }}"
+                                    class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-white hover:text-gray-900 transition ease-in-out duration-150"
+                                >
+                                    Dashboard
+                                </a>
+                            @else
+                                <a
+                                    href="{{ route('login') }}"
+                                    class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/50 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-white hover:text-gray-900 transition ease-in-out duration-150"
+                                >
+                                    Masuk
+                                </a>
 
-                        {{-- Sembunyikan Register jika Anda sudah menonaktifkannya --}}
-                        {{-- 
-                        @if (Route::has('register'))
-                            <a
-                                href="{{ route('register') }}"
-                                class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                            >
-                                Register
-                            </a>
-                        @endif 
-                        --}}
-                    @endauth
-                </nav>
-            @endif
+                                @if (Route::has('register'))
+                                    <a
+                                        href="{{ route('register') }}"
+                                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                                    >
+                                        Daftar
+                                    </a>
+                                @endif 
+                            @endauth
+                        </nav>
+                    @endif
                 </div>
                 
-                <!-- Mobile Menu Button -->
-                <button class="md:hidden text-white" onclick="toggleMobileMenu()">
+                <button class="md:hidden text-white focus:outline-none" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars text-2xl"></i>
                 </button>
             </div>
         </div>
         
-        <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden md:hidden bg-royal-900 border-t border-royal-700">
+        <div id="mobileMenu" class="hidden md:hidden bg-gray-900 border-t border-gray-800 absolute w-full left-0 top-full shadow-xl">
             <div class="container mx-auto px-6 py-4 space-y-4">
                 @if (Route::has('login'))
                     @auth
-                        <a href="{{ url('/dashboard') }}" class="block text-white hover:text-yellow-400 transition">
+                        @php
+                            $targetRoute = 'dashboard.index'; 
+                            if (Auth::user()->role === 'admin') $targetRoute = 'admin.dashboard';
+                            elseif (Auth::user()->role === 'jurusan') $targetRoute = 'jurusan.dashboard';
+                        @endphp
+                        <a href="{{ route($targetRoute) }}" class="block w-full text-center bg-white text-gray-700 px-4 py-2 rounded-md font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-gray-50">
                             Dashboard
                         </a>
                     @else
-                        <a href="{{ route('login') }}" class="block text-white hover:text-yellow-400 transition">
-                            Login
+                        <a href="{{ route('login') }}" class="block w-full text-center bg-white text-gray-700 px-4 py-2 rounded-md font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-gray-50">
+                            Masuk
                         </a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="block gold-gradient text-royal-900 px-6 py-2.5 rounded-lg font-semibold text-center">
-                                Register
+                            <a href="{{ route('register') }}" class="block w-full text-center bg-red-600 text-white px-4 py-2 rounded-md font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-red-700">
+                                Daftar
                             </a>
                         @endif
                     @endauth
@@ -165,7 +158,7 @@
             </div>
         </div>
     </nav>
-
+    
     <!-- Hero Section -->
     <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
         <!-- Background Image with Overlay -->
