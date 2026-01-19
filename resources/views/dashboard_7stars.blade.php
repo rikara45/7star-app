@@ -239,13 +239,21 @@
                         <h3 class="text-lg font-bold text-red-800 mb-2">Validasi Data Belum Terpenuhi / Menunggu Verifikasi</h3>
                         <ul class="space-y-2 text-sm">
                             {{-- List validasi (Copy dari kode sebelumnya atau biarkan saja) --}}
-                            <li class="flex items-center {{ $isSelfDone ? 'text-green-700 font-semibold' : 'text-red-600' }}">... Mengisi Self Assessment</li>
-                            <li class="flex items-center {{ $completedSuperior >= 1 ? 'text-green-700 font-semibold' : 'text-red-600' }}">... Minimal 1 Atasan</li>
-                            <li class="flex items-center {{ $completedPeer >= 3 ? 'text-green-700 font-semibold' : 'text-red-600' }}">... Minimal 3 Sejawat</li>
-                            <li class="flex items-center {{ $uploadedPortfolioCount >= 3 ? 'text-green-700 font-semibold' : 'text-red-600' }}">... Minimal 3 Dokumen Portofolio</li>
-                            <li class="flex items-center {{ $pendingCount == 0 ? 'text-green-700 font-semibold' : 'text-red-600' }}">
-                                ... Status Verifikasi Jurusan (Pending: <b>{{ $pendingCount }}</b>)
-                            </li>
+                            <li class="flex items-center {{ $isSelfDone ? 'text-green-700 font-semibold' : 'text-red-600' }}">@if($isSelfDone) <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> @else <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> @endif Mengisi Self Assessment</li>
+                            <li class="flex items-center {{ $completedSuperior >= 1 ? 'text-green-700 font-semibold' : 'text-red-600' }}">@if($completedSuperior >= 1) <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> @else <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> @endif Minimal 1 Atasan (Saat ini: <b>{{ $completedSuperior }}</b>)</li>
+                             <li class="flex items-center {{ $completedPeer >= 3 ? 'text-green-700 font-semibold' : 'text-red-600' }}">@if($completedPeer >= 3) <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> @else <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> @endif Minimal 3 Sejawat (Saat ini: <b>{{ $completedPeer }}</b>)</li>
+                             <li class="flex items-center {{ $uploadedPortfolioCount >= 3 && $pendingCount == 0 ? 'text-green-700 font-semibold' : 'text-red-600' }}">
+                            @if($uploadedPortfolioCount >= 3 && $pendingCount == 0)
+                                <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            @else
+                                <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            @endif
+                            Minimal 3 Dokumen Portofolio (Saat ini: <b>{{ $uploadedPortfolioCount }}</b>) & Status Verifikasi Jurusan (Pending: <b>{{ $pendingCount }}</b>)
+                        </li>
                         </ul>
                     </div>
                     <button disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-8 rounded-lg cursor-not-allowed mx-auto flex items-center">Lengkapi / Menunggu Verifikasi</button>
