@@ -32,28 +32,36 @@ class JurusanController extends Controller
 
     // 2. HALAMAN LIST VERIFIKASI (Tabel Dosen)
     public function verificationIndex(Request $request)
-    {
-        $query = User::where('role', 'dosen')
-            ->withCount(['portfolios as pending_count' => function($q){
-                $q->where('status', 'uploaded');
-            }])
-            // Eager Load analisis terakhir agar kita tahu dosen ini sudah ada hasil atau belum
-            ->with(['aiAnalyses' => function($q) {
-                $q->latest();
-            }]);
+{
+    // Kita ambil data Dosen
+    $query = User::where('role', 'dosen')
+        // 1. Hitung Dokumen Pending (Status 'uploaded')
+        ->withCount(['portfolios as pending_count' => function($q){
+            $q->where('status', 'uploaded');
+        }])
+        // 2. Hitung Total Dokumen (PENTING: Untuk tahu dia sudah kirim atau belum)
+        ->withCount('portfolios as total_portfolios') 
+        
+        // Load analisis AI (opsional, bawaan kode lama Anda)
+        ->with(['aiAnalyses' => function($q) {
+            $q->latest();
+        }]);
 
-        // Search & Filter (Logika Lama Tetap Dipakai)
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-        if ($request->status == 'pending') {
-            $query->having('pending_count', '>', 0);
-        }
-
-        $dosens = $query->orderBy('pending_count', 'desc')->paginate(10);
-
-        return view('jurusan.verifikasi.index', compact('dosens'));
+    // Search
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
     }
+    
+    // Filter Status
+    if ($request->status == 'pending') {
+        $query->having('pending_count', '>', 0);
+    }
+
+    $dosens = $query->orderBy('pending_count', 'desc')->paginate(10);
+
+    // Kirim variabel '$dosens' (BUKAN $assessments)
+    return view('jurusan.verifikasi.index', compact('dosens'));
+}
 
     // 3. HALAMAN DETAIL (Form Penilaian)
     public function show($userId)

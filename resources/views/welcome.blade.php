@@ -3,13 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link rel="icon" href="{{ asset('images/bintang.png') }}" type="image/png">
-    
     <title>7-Star Transformational Leadership Assessment</title>
+    
+    <link rel="icon" href="{{ asset('images/bintang.png') }}" type="image/png">
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <style>
         /* --- RESET & BASIC SETUP --- */
         * {
@@ -22,8 +23,6 @@
         body {
             width: 100%;
             min-height: 100vh;
-            /* BACKGROUND DEEP BLUE */
-            background: radial-gradient(circle at 50% -20%, #0f1e45 0%, #020617 60%, #000000 100%);
             color: white;
             overflow-x: hidden;
             position: relative;
@@ -31,36 +30,39 @@
             flex-direction: column;
         }
 
-        /* --- LAYER 1: LIGHT GLOW --- */
-        .glow-effect {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2; 
-            background: radial-gradient(circle at 50% 50%, rgba(0, 123, 255, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        /* --- LAYER 2: BACKGROUND WAVY LINES --- */
-        .background-lines {
-            position: absolute;
+        /* --- BACKGROUND LAYER --- */
+        .bg-container {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0; 
-            pointer-events: none; 
-            opacity: 0.3;
-            overflow: hidden;
+            z-index: -1;
         }
 
-        .background-lines svg {
+        /* 1. Gambar Asli */
+        .bg-image {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url("{{ asset('images/background-7star.png') }}");
+        background-size: cover; 
+        background-position: center center; 
+        background-repeat: no-repeat; 
+        z-index: -1; 
+}
+
+        2. Overlay Biru Gelap (KUNCI DESAIN AWAL)
+        /* Ini membuat gambar jadi gelap & biru, mirip desain gradasi awal */
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            background: radial-gradient(circle at 50% 30%, rgba(15, 30, 69, 0.85) 0%, rgba(2, 6, 23, 0.95) 100%);
         }
 
         /* --- NAVBAR --- */
@@ -71,22 +73,15 @@
             padding: 40px 80px;
             width: 100%;
             z-index: 10;
-            transition: all 0.3s ease;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
         }
 
         .logo-img {
-            height: 60px;
+            height: 80px;
             width: auto;
             object-fit: contain;
-            display: block;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
-        /* --- TOMBOL NAVBAR --- */
         .nav-buttons {
             display: flex;
             gap: 20px;
@@ -95,78 +90,76 @@
 
         .btn {
             padding: 10px 32px;
-            border-radius: 6px; 
+            /* UBAH DARI 50px JADI 12px (KOTAK) */
+            border-radius: 12px; 
             font-size: 0.9rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             transition: 0.3s;
             text-decoration: none;
-            display: inline-block;
             text-align: center;
         }
 
         .btn-login {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
+            backdrop-filter: blur(4px);
         }
         
         .btn-login:hover {
             border-color: white;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .btn-register {
             background: linear-gradient(90deg, #d64732 0%, #b52b19 100%);
             border: none;
             color: white;
+            box-shadow: 0 4px 15px rgba(181, 43, 25, 0.3);
         }
 
         .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(181, 43, 25, 0.5);
             filter: brightness(1.1);
-            box-shadow: 0 0 15px rgba(214, 71, 50, 0.4);
         }
 
-        /* --- HERO SECTION (Perbaikan Posisi Disini) --- */
+        /* --- HERO SECTION --- */
         .hero {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Pastikan konten di tengah secara vertikal */
+            justify-content: center; 
             text-align: center;
-            
-            /* SAYA HAPUS 'margin-top: -40px' DAN GANTI DENGAN INI: */
-            padding-top: 40px;    /* Memberi jarak dari Navbar */
-            padding-bottom: 60px; /* Memberi jarak dari bawah layar */
-            
+            padding: 40px 20px;    
             z-index: 5; 
-            padding-left: 20px;
-            padding-right: 20px;
         }
 
         .sub-headline {
             font-size: 1.1rem;
             font-weight: 300;
-            color: #d0d0d0;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
-        /* JUDUL: Jarak ke tombol diatur disini (margin-bottom) */
         .main-headline {
-            font-size: 3.2rem;
-            font-weight: 600;
+            font-size: 3.5rem;
+            font-weight: 700;
             line-height: 1.2;
-            margin-bottom: 50px; /* Jarak judul ke tombol */
+            margin-bottom: 50px; 
             text-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            max-width: 1200px; 
-            width: 100%;
+            background: linear-gradient(to bottom, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* --- TOMBOL UTAMA (CTA) --- */
+        /* --- CTA BUTTON --- */
         .cta-button {
             display: flex;
             align-items: center;
@@ -182,12 +175,8 @@
             letter-spacing: 1.5px;
             cursor: pointer;
             transition: all 0.3s ease;
-            
-            /* Jarak Tombol ke Kartu Bawah */
-            margin-bottom: 80px; /* Tidak terlalu jauh, tidak terlalu dekat */
-            
+            margin-bottom: 90px;
             line-height: 1;
-            text-decoration: none;
         }
 
         .cta-button:hover {
@@ -199,53 +188,65 @@
         /* --- CARDS SECTION --- */
         .cards-container {
             display: flex;
-            gap: 25px;
+            gap: 30px;
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        .card {
+        .glass-card {
             width: 240px;
             height: 150px;
+            /* Kaca yang lebih "Deep" sesuai desain awal */
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            backdrop-filter: blur(10px); 
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            gap: 12px;
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
             transition: transform 0.3s ease;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.07);
+        .glass-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .card-title {
             font-size: 2.5rem;
-            font-weight: 600;
-            color: #3b82f6; 
+            font-weight: 700;
+            color: #60a5fa; /* Biru terang */
             line-height: 1;
+            text-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
         }
 
         .card-desc {
-            font-size: 0.8rem;
-            color: #cbd5e1;
+            font-size: 0.85rem;
+            color: #e2e8f0;
             font-weight: 400;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
         }
 
         .star-icon-card {
-            width: 55px;
-            height: 55px;
+            width: 50px;
+            height: 50px;
             object-fit: contain;
             display: block;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            text-align: center;
+            padding: 30px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.4);
+            z-index: 10;
         }
 
         /* --- RESPONSIVE MOBILE --- */
@@ -255,84 +256,40 @@
                 gap: 20px;
                 padding: 30px 20px;
             }
-
             .nav-buttons {
                 width: 100%;
                 justify-content: center;
-                gap: 10px;
             }
-
             .btn {
-                padding: 10px 24px;
-                font-size: 0.85rem;
+                padding: 12px 0;
                 flex: 1; 
             }
-
-            /* Di HP, jaraknya disesuaikan lagi */
-            .hero {
-                padding-top: 20px;
-                padding-bottom: 40px;
-            }
-
             .main-headline { 
-                font-size: 1.8rem; 
+                font-size: 2rem; 
                 margin-bottom: 40px;
-                max-width: 100%;
             }
-
             .cta-button {
                 width: 100%;
                 max-width: 320px;
-                padding: 15px 20px;
-                font-size: 0.9rem;
                 text-align: center;
-                margin-bottom: 60px; /* Jarak ke kartu di HP lebih kecil */
+                margin-bottom: 50px;
             }
-
-            .sub-headline {
-                font-size: 0.9rem;
-            }
-
             .cards-container { 
                 flex-direction: column; 
                 width: 100%;
             }
-            
-            .card { 
+            .glass-card { 
                 width: 100%; 
                 max-width: 320px; 
-            }
-
-            .logo-img { 
-                height: 50px; 
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="glow-effect"></div>
-
-    <div class="background-lines">
-        <svg viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-            <g opacity="0.5">
-                <path d="M-100 200 C 200 400, 600 100, 1500 400" stroke="url(#line_grad1)" stroke-width="1.5"/>
-                <path d="M-200 500 C 300 900, 1000 200, 1600 600" stroke="url(#line_grad2)" stroke-width="2"/>
-                <path d="M0 800 C 400 1000, 1100 600, 1500 800" stroke="url(#line_grad1)" stroke-width="1.5"/>
-            </g>
-            <defs>
-                <linearGradient id="line_grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="rgba(0, 80, 200, 0)"/>
-                    <stop offset="50%" stop-color="rgba(100, 200, 255, 0.5)"/>
-                    <stop offset="100%" stop-color="rgba(0, 80, 200, 0)"/>
-                </linearGradient>
-                <linearGradient id="line_grad2" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="rgba(50, 150, 255, 0)"/>
-                    <stop offset="40%" stop-color="rgba(150, 220, 255, 0.7)"/>
-                    <stop offset="100%" stop-color="rgba(50, 150, 255, 0)"/>
-                </linearGradient>
-            </defs>
-        </svg>
+    <div class="bg-container">
+        <div class="bg-image"></div>
+        <div class="bg-overlay"></div>
     </div>
 
     <nav>
@@ -345,7 +302,7 @@
         @if (Route::has('login'))
             <div class="nav-buttons">
                 @auth
-                    <a href="{{ url('/dashboard') }}" class="btn btn-login">DASHBOARD</a>
+                    <a href="{{ route('dashboard') }}" class="btn btn-register">DASHBOARD</a>
                 @else
                     <a href="{{ route('login') }}" class="btn btn-login">MASUK</a>
                     @if (Route::has('register'))
@@ -361,30 +318,36 @@
         
         <h1 class="main-headline">
             7-Star Transformational Leadership<br>
-            Rating System
+             Rating System
         </h1>
         
-        <a href="{{ route('login') }}" class="cta-button">
-            MULAI PENILAIAN SEKARANG
-        </a>
+        @guest
+            <a href="{{ route('login') }}" class="cta-button">
+                MULAI PENILAIAN SEKARANG
+            </a>
+        @endguest
 
         <div class="cards-container">
-            <div class="card">
+            <div class="glass-card">
                 <div class="card-title">360°</div>
                 <div class="card-desc">Multi-Rater Feedback</div>
             </div>
 
-            <div class="card">
+            <div class="glass-card">
                 <div class="card-title">AI</div>
                 <div class="card-desc">Powered Analysis</div>
             </div>
 
-            <div class="card">
+            <div class="glass-card">
                 <img src="{{ asset('images/bintang.png') }}" alt="Star Icon" class="star-icon-card">
                 <div class="card-desc">Star Rating System</div>
             </div>
         </div>
     </main>
+
+    <footer>
+        &copy; {{ date('Y') }} 7-Star. All rights reserved.
+    </footer>
 
 </body>
 </html>
