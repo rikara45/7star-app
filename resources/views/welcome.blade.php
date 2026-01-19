@@ -3,328 +3,388 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>7-Star Transformational Leadership Rating System</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="icon" href="{{ asset('images/bintang.png') }}" type="image/png">
     
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>7-Star Transformational Leadership Assessment</title>
     
-    <!-- Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     
     <style>
+        /* --- RESET & BASIC SETUP --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-        .gold-gradient {
-            background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); /* Gradasi Emas */
-            color: #1a202c; /* Warna teks gelap (Royal 900 approximation) */
-        }
-        .text-royal-900 {
-            color: #0f172a; /* Biru sangat gelap */
-        }
-        /* Efek Hover agar makin berkilau */
-        .gold-gradient:hover {
-            background: linear-gradient(135deg, #FFE55C 0%, #FDC830 100%);
-        }
         body {
-            font-family: 'Inter', sans-serif;
+            width: 100%;
+            min-height: 100vh;
+            /* BACKGROUND DEEP BLUE */
+            background: radial-gradient(circle at 50% -20%, #0f1e45 0%, #020617 60%, #000000 100%);
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
-        .font-display {
-            font-family: 'Playfair Display', serif;
+
+        /* --- LAYER 1: LIGHT GLOW --- */
+        .glow-effect {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2; 
+            background: radial-gradient(circle at 50% 50%, rgba(0, 123, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
         }
-        .gold-gradient {
-            background: linear-gradient(135deg, #D4AF37 0%, #F9D976 50%, #D4AF37 100%);
+
+        /* --- LAYER 2: BACKGROUND WAVY LINES --- */
+        .background-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; 
+            pointer-events: none; 
+            opacity: 0.3;
+            overflow: hidden;
         }
-        .royal-gradient {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+
+        .background-lines svg {
+            width: 100%;
+            height: 100%;
         }
-        .hero-overlay {
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(59, 130, 246, 0.85) 100%);
+
+        /* --- NAVBAR --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 80px;
+            width: 100%;
+            z-index: 10;
+            transition: all 0.3s ease;
         }
-        .star-shimmer {
-            animation: shimmer 2s infinite;
+
+        .logo-container {
+            display: flex;
+            align-items: center;
         }
-        @keyframes shimmer {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+
+        .logo-img {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* --- TOMBOL NAVBAR --- */
+        .nav-buttons {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 32px;
+            border-radius: 6px; 
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-login {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .btn-login:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-register {
+            background: linear-gradient(90deg, #d64732 0%, #b52b19 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-register:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 0 15px rgba(214, 71, 50, 0.4);
+        }
+
+        /* --- HERO SECTION (Perbaikan Posisi Disini) --- */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Pastikan konten di tengah secara vertikal */
+            text-align: center;
+            
+            /* SAYA HAPUS 'margin-top: -40px' DAN GANTI DENGAN INI: */
+            padding-top: 40px;    /* Memberi jarak dari Navbar */
+            padding-bottom: 60px; /* Memberi jarak dari bawah layar */
+            
+            z-index: 5; 
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .sub-headline {
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: #d0d0d0;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* JUDUL: Jarak ke tombol diatur disini (margin-bottom) */
+        .main-headline {
+            font-size: 3.2rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 50px; /* Jarak judul ke tombol */
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 1200px; 
+            width: 100%;
+        }
+
+        /* --- TOMBOL UTAMA (CTA) --- */
+        .cta-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            padding: 18px 45px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            
+            /* Jarak Tombol ke Kartu Bawah */
+            margin-bottom: 80px; /* Tidak terlalu jauh, tidak terlalu dekat */
+            
+            line-height: 1;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+        }
+
+        /* --- CARDS SECTION --- */
+        .cards-container {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 240px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .card-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #3b82f6; 
+            line-height: 1;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .star-icon-card {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 900px) {
+            nav {
+                flex-direction: column;
+                gap: 20px;
+                padding: 30px 20px;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .btn {
+                padding: 10px 24px;
+                font-size: 0.85rem;
+                flex: 1; 
+            }
+
+            /* Di HP, jaraknya disesuaikan lagi */
+            .hero {
+                padding-top: 20px;
+                padding-bottom: 40px;
+            }
+
+            .main-headline { 
+                font-size: 1.8rem; 
+                margin-bottom: 40px;
+                max-width: 100%;
+            }
+
+            .cta-button {
+                width: 100%;
+                max-width: 320px;
+                padding: 15px 20px;
+                font-size: 0.9rem;
+                text-align: center;
+                margin-bottom: 60px; /* Jarak ke kartu di HP lebih kecil */
+            }
+
+            .sub-headline {
+                font-size: 0.9rem;
+            }
+
+            .cards-container { 
+                flex-direction: column; 
+                width: 100%;
+            }
+            
+            .card { 
+                width: 100%; 
+                max-width: 320px; 
+            }
+
+            .logo-img { 
+                height: 50px; 
+            }
         }
     </style>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'royal': {
-                            900: '#1e3a8a',
-                            800: '#1e40af',
-                            700: '#1d4ed8',
-                            600: '#2563eb',
-                        },
-                        'gold': {
-                            500: '#D4AF37',
-                            600: '#B8960F',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
 </head>
-<body class="antialiased bg-gray-50">
-    
-    <nav class="fixed w-full z-50 transition-all duration-300 bg-transparent" id="navbar">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <a href="/" class="flex items-center space-x-2">
-                    <div class="flex items-center">
-                        <i class="fas fa-star text-yellow-400 text-2xl star-shimmer"></i>
-                        <span class="ml-2 text-xl font-bold text-white font-display">7-Star Leadership</span>
-                    </div>
-                </a>
-                
-                <div class="hidden md:flex items-center space-x-4">
-                    @if (Route::has('login'))
-                        <nav class="-mx-3 flex flex-1 justify-end gap-2">
-                            @auth
-                                {{-- LOGIKA PENENTUAN ARAH DASHBOARD --}}
-                                @php
-                                    $targetRoute = 'dashboard.index'; 
-                                    if (Auth::user()->role === 'admin') $targetRoute = 'admin.dashboard';
-                                    elseif (Auth::user()->role === 'jurusan') $targetRoute = 'jurusan.dashboard';
-                                @endphp
+<body>
 
-                                <a
-                                    href="{{ route($targetRoute) }}"
-                                    class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-white hover:text-gray-900 transition ease-in-out duration-150"
-                                >
-                                    Dashboard
-                                </a>
-                            @else
-                                <a
-                                    href="{{ route('login') }}"
-                                    class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/50 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-white hover:text-gray-900 transition ease-in-out duration-150"
-                                >
-                                    Masuk
-                                </a>
+    <div class="glow-effect"></div>
 
-                                @if (Route::has('register'))
-                                    <a
-                                        href="{{ route('register') }}"
-                                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                                    >
-                                        Daftar
-                                    </a>
-                                @endif 
-                            @endauth
-                        </nav>
-                    @endif
-                </div>
-                
-                <button class="md:hidden text-white focus:outline-none" onclick="toggleMobileMenu()">
-                    <i class="fas fa-bars text-2xl"></i>
-                </button>
-            </div>
+    <div class="background-lines">
+        <svg viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <g opacity="0.5">
+                <path d="M-100 200 C 200 400, 600 100, 1500 400" stroke="url(#line_grad1)" stroke-width="1.5"/>
+                <path d="M-200 500 C 300 900, 1000 200, 1600 600" stroke="url(#line_grad2)" stroke-width="2"/>
+                <path d="M0 800 C 400 1000, 1100 600, 1500 800" stroke="url(#line_grad1)" stroke-width="1.5"/>
+            </g>
+            <defs>
+                <linearGradient id="line_grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="rgba(0, 80, 200, 0)"/>
+                    <stop offset="50%" stop-color="rgba(100, 200, 255, 0.5)"/>
+                    <stop offset="100%" stop-color="rgba(0, 80, 200, 0)"/>
+                </linearGradient>
+                <linearGradient id="line_grad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="rgba(50, 150, 255, 0)"/>
+                    <stop offset="40%" stop-color="rgba(150, 220, 255, 0.7)"/>
+                    <stop offset="100%" stop-color="rgba(50, 150, 255, 0)"/>
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+
+    <nav>
+        <div class="logo-container">
+            <a href="/">
+                <img src="{{ asset('images/logo-7star.png') }}" alt="7-Star Logo" class="logo-img">
+            </a>
         </div>
-        
-        <div id="mobileMenu" class="hidden md:hidden bg-gray-900 border-t border-gray-800 absolute w-full left-0 top-full shadow-xl">
-            <div class="container mx-auto px-6 py-4 space-y-4">
-                @if (Route::has('login'))
-                    @auth
-                        @php
-                            $targetRoute = 'dashboard.index'; 
-                            if (Auth::user()->role === 'admin') $targetRoute = 'admin.dashboard';
-                            elseif (Auth::user()->role === 'jurusan') $targetRoute = 'jurusan.dashboard';
-                        @endphp
-                        <a href="{{ route($targetRoute) }}" class="block w-full text-center bg-white text-gray-700 px-4 py-2 rounded-md font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-gray-50">
-                            Dashboard
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}" class="block w-full text-center bg-white text-gray-700 px-4 py-2 rounded-md font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-gray-50">
-                            Masuk
-                        </a>
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="block w-full text-center bg-red-600 text-white px-4 py-2 rounded-md font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-red-700">
-                                Daftar
-                            </a>
-                        @endif
-                    @endauth
-                @endif
-            </div>
-        </div>
-    </nav>
-    
-    <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <!-- Background Image with Overlay -->
-        <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=2048" 
-                 alt="University Building" 
-                 class="w-full h-full object-cover">
-            <div class="absolute inset-0 hero-overlay"></div>
-        </div>
-        
-        <!-- Decorative Elements -->
-        <div class="absolute top-20 right-10 text-yellow-400/20 hidden lg:block">
-            <i class="fas fa-star text-8xl"></i>
-        </div>
-        <div class="absolute bottom-20 left-10 text-yellow-400/20 hidden lg:block">
-            <i class="fas fa-award text-6xl"></i>
-        </div>
-        
-        <!-- Content -->
-        <div class="container mx-auto px-6 relative z-10 text-center text-white pt-20">
-            <div class="max-w-4xl mx-auto">
-                <!-- Badge -->
-                <div class="inline-flex items-center space-x-2 bg-yellow-400/20 backdrop-blur-sm border border-yellow-400/30 rounded-full px-6 py-2 mb-8">
-                    <i class="fas fa-certificate text-yellow-400"></i>
-                    <span class="text-sm font-semibold text-yellow-400">Transformational Leadership Assessment</span>
-                </div>
-                
-                <!-- Headline -->
-                <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight font-display">
-                    7-Star <span class="text-yellow-400">Transformational Leadership</span> Rating System
-                </h1>
-                
-                <!-- CTA Buttons -->
-                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8 md:mt-20">
+
+        @if (Route::has('login'))
+            <div class="nav-buttons">
                 @auth
-                    {{-- 1. LOGIKA JIKA SUDAH LOGIN --}}
-                    @php
-                        $targetRoute = 'dashboard.index'; // Default Dosen
-                        if (Auth::user()->role === 'admin') {
-                            $targetRoute = 'admin.dashboard';
-                        } elseif (Auth::user()->role === 'jurusan') {
-                            $targetRoute = 'jurusan.dashboard';
-                        }
-                    @endphp
-
-                    <a href="{{ route($targetRoute) }}" 
-                       class="gold-gradient text-royal-900 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all inline-flex items-center space-x-2">
-                        <span>Lanjutkan ke Dashboard ({{ ucfirst(Auth::user()->role) }})</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="{{ url('/dashboard') }}" class="btn btn-login">DASHBOARD</a>
                 @else
-                    {{-- 2. LOGIKA JIKA BELUM LOGIN (TAMU) --}}
-                    <a href="{{ route('login') }}" 
-                       class="gold-gradient text-royal-900 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all inline-flex items-center space-x-2">
-                        <span>Mulai Penilaian Sekarang</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="{{ route('login') }}" class="btn btn-login">MASUK</a>
+                    @if (Route::has('register'))
+                        <a href="{{ route('register') }}" class="btn btn-register">DAFTAR</a>
+                    @endif
                 @endauth
             </div>
+        @endif
+    </nav>
 
-                </div>
-                
-                <!-- Stats -->
-                <div class="grid grid-cols-3 gap-6 mt-16 max-w-2xl mx-auto">
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                        <div class="text-3xl font-bold text-yellow-400 mb-2">360°</div>
-                        <div class="text-sm text-gray-200">Multi-Rater Feedback</div>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                        <div class="text-3xl font-bold text-yellow-400 mb-2">AI</div>
-                        <div class="text-sm text-gray-200">Powered Analysis</div>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                        <div class="text-3xl font-bold text-yellow-400 mb-2">7★</div>
-                        <div class="text-sm text-gray-200">Star Rating System</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <main class="hero">
+        <h3 class="sub-headline">Transformational Leadership Assessment</h3>
         
-        <!-- Scroll Indicator -->
-        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <i class="fas fa-chevron-down text-white text-2xl opacity-50"></i>
-        </div>
-    </section>
-    
-    <!-- Footer Section -->
-    <footer class="bg-gray-900 text-gray-400 py-8">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                <!-- Logo & Copyright -->
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-star text-yellow-400 text-xl star-shimmer"></i>
-                    <div>
-                        <div class="text-white font-bold font-display">7-Star Leadership</div>
-                        <div class="text-xs text-gray-500">© 2025 All rights reserved</div>
-                    </div>
-                </div>
-                
-                <!-- Links -->
-                <div class="flex items-center space-x-6 text-sm">
-                    <a href="#" class="hover:text-yellow-400 transition">About</a>
-                    <a href="#" class="hover:text-yellow-400 transition">Contact</a>
-                    <a href="#" class="hover:text-yellow-400 transition">Privacy</a>
-                </div>
-                
-                <!-- Social Media -->
-                <div class="flex items-center space-x-4">
-                    <a href="#" class="text-gray-400 hover:text-yellow-400 transition">
-                        <i class="fab fa-linkedin-in text-lg"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-yellow-400 transition">
-                        <i class="fab fa-instagram text-lg"></i>
-                    </a>
-                    <a href="#" class="text-gray-400 hover:text-yellow-400 transition">
-                        <i class="fab fa-twitter text-lg"></i>
-                    </a>
-                </div>
+        <h1 class="main-headline">
+            7-Star Transformational Leadership<br>
+            Rating System
+        </h1>
+        
+        <a href="{{ route('login') }}" class="cta-button">
+            MULAI PENILAIAN SEKARANG
+        </a>
+
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-title">360°</div>
+                <div class="card-desc">Multi-Rater Feedback</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">AI</div>
+                <div class="card-desc">Powered Analysis</div>
+            </div>
+
+            <div class="card">
+                <img src="{{ asset('images/bintang.png') }}" alt="Star Icon" class="star-icon-card">
+                <div class="card-desc">Star Rating System</div>
             </div>
         </div>
-    </footer>
+    </main>
 
-    <!-- JavaScript -->
-    <script>
-        // Mobile Menu Toggle
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('hidden');
-        }
-
-        // Navbar Background on Scroll
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('bg-royal-900', 'shadow-lg');
-            } else {
-                navbar.classList.remove('bg-royal-900', 'shadow-lg');
-            }
-        });
-
-        // Smooth Scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const href = this.getAttribute('href');
-                if (href === '#' || href === '') return;
-                
-                e.preventDefault();
-                const target = document.querySelector(href);
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('mobileMenu');
-            const button = event.target.closest('button');
-            
-            if (!menu.contains(event.target) && !button && !menu.classList.contains('hidden')) {
-                menu.classList.add('hidden');
-            }
-        });
-    </script>
 </body>
 </html>

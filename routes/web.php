@@ -8,12 +8,13 @@ use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\JurusanController;
 
+
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return view('dashboard'); 
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Gabungkan semua route yang butuh auth di satu group

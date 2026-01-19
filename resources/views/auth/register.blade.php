@@ -1,52 +1,58 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+    <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-white mb-2">Buat Akun Baru</h2>
+        <p class="text-gray-400 text-sm">Bergabunglah bersama kami</p>
+    </div>
+
+    <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
         <div>
-            <x-input-label for="name" :value="__('Nama Lengkap')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+            <label class="block text-sm font-medium text-gray-300 mb-1">Nama Lengkap</label>
+            <input type="text" name="name" :value="old('name')" required autofocus
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+            <input type="email" name="email" :value="old('email')" required
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Kata Sandi')" />
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Kata Sandi</label>
+            <input type="password" name="password" required
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Konfirmasi Kata Sandi')" />
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Konfirmasi Kata Sandi</label>
+            <input type="password" name="password_confirmation" required
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </div>
 
-        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <x-input-label for="role" :value="__('Pilih Peran')" class="text-yellow-800 font-bold" />
-            <select id="role" name="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                <option value="dosen">Dosen (Yang Dinilai)</option>
-                <option value="jurusan">Jurusan (Verifikator)</option>
-            </select>
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Daftar Sebagai</label>
+            <div class="relative">
+                <select name="role" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer">
+                    <option value="" disabled selected class="text-gray-500 bg-gray-900">-- Pilih Peran --</option>
+                    <option value="dosen" class="text-white bg-gray-900">Dosen (User)</option>
+                    <option value="jurusan" class="text-white bg-gray-900">Pihak Jurusan (Verifikator)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+            </div>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Sudah punya akun?') }}
+        <button type="submit" class="w-full mt-4 py-3 px-4 bg-gradient-to-r from-[#D93025] to-[#b91c1c] hover:to-[#991b1b] text-white font-bold rounded-xl shadow-lg shadow-red-900/40 transform hover:-translate-y-0.5 transition-all duration-300 uppercase tracking-widest text-sm">
+            Daftar Sekarang
+        </button>
+
+        <div class="text-center mt-4">
+            <a href="{{ route('login') }}" class="text-sm text-gray-400 hover:text-white transition underline decoration-gray-600 hover:decoration-white">
+                Sudah punya akun? Masuk
             </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Daftar') }}
-            </x-primary-button>
         </div>
     </form>
 </x-guest-layout>
