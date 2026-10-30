@@ -48,9 +48,13 @@ Perubahan yang disengaja (dicatat):
 - `uni_address` `nullable|string|max:5000` (kolom `text`), `uni_website` `nullable|string|max:255`.
   `uni_website` **tidak** memakai aturan `url` supaya nilai lama seperti `www.kampus.ac.id` tidak
   tiba-tiba memblokir penyimpanan.
-- `UniversitySetting` diambil dengan `firstOrCreate([])` supaya tidak 500 bila baris tunggal hilang.
+- `UniversitySetting` diambil dengan `firstOrCreate([], ['uni_name' => ...])` supaya tidak 500 bila baris
+  tunggal hilang; default diisi eksplisit agar form pertama langsung menampilkan nama, bukan kosong.
 - Policy dipakai sebagai lapisan kedua: route tetap dijaga middleware `role:admin`, policy menjaga
-  pemanggilan langsung.
+  pemanggilan langsung. `authorize` dijalankan **sebelum** `firstOrCreate` (ability `manage`) supaya
+  non-admin tidak memicu penulisan baris.
+- Password saat **update** kini `nullable|string|min:6` (dulu tanpa batas). Ini perubahan perilaku yang
+  disengaja agar konsisten dengan pembuatan user; password lama tidak berubah bila validasi gagal.
 
 Di luar cakupan (risiko dicatat, bukan diubah di irisan ini):
 - Admin masih bisa menghapus dirinya sendiri atau admin terakhir → bisa kehilangan akses.

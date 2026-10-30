@@ -9,6 +9,7 @@ use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\JurusanController;
+use App\Http\Controllers\UniversitySettingController;
 
 
 Route::get('/', function () {
@@ -63,8 +64,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('/admin/users/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy'); // Hapus
 
     // Setting Universitas
-    Route::get('/admin/settings', [App\Http\Controllers\UniversitySettingController::class, 'edit'])->name('admin.settings.edit');
-    Route::put('/admin/settings', [App\Http\Controllers\UniversitySettingController::class, 'update'])->name('admin.settings.update');
+    Route::get('/admin/settings', [UniversitySettingController::class, 'edit'])->name('admin.settings.edit');
+    Route::put('/admin/settings', [UniversitySettingController::class, 'update'])->name('admin.settings.update');
 });
 
 // 2. Route Khusus JURUSAN (diperbarui)
