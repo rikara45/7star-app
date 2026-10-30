@@ -4,86 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\AssessmentRequest;
 use App\Models\AssessmentPeriod;
-use App\Models\Portfolio;
 use App\Models\AiAnalysis;
 use App\Http\Controllers\PortfolioController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http; 
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AssessmentInvitation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\UniversitySetting;
 use App\Models\User;
+use App\Services\AssessmentScoreService;
+use App\Services\AiNarrativeService;
 
 class UserDashboardController extends Controller
 {
-    // =========================================================================
-    // FUNGSI PRIVAT: Menghitung Skor (Dipakai di Dashboard & Tombol Proses)
-    // =========================================================================
-    private function calculateRealtimeScores($user, $period)
-    {
-        $rawScores = DB::table('assessment_responses')
-            ->join('assessment_requests', 'assessment_responses.assessment_request_id', '=', 'assessment_requests.id')
-            ->join('master_questions', 'assessment_responses.master_question_id', '=', 'master_questions.id')
-            ->where('assessment_requests.user_id', $user->id)
-            ->where('assessment_requests.assessment_period_id', $period->id)
-            ->where('assessment_requests.is_completed', true)
-            ->select(
-                'master_questions.dimension', 
-                'assessment_requests.relationship',
-                DB::raw('AVG(assessment_responses.score) as avg_score')
-            )
-            ->groupBy('master_questions.dimension', 'assessment_requests.relationship')
-            ->get();
-
-        $behaviorScore100 = 0;
-        $dimensionString = "Data penilaian 360 belum lengkap.";
-        $finalDimensionScores = []; // Array untuk menyimpan rincian
-
-        if ($rawScores->isNotEmpty()) {
-            $groupedByDimension = $rawScores->groupBy('dimension');
-
-            foreach ($groupedByDimension as $dimension => $items) {
-                $finalDimensionScores[$dimension] = $items->avg('avg_score');
-            }
-
-            $averageBehavior = collect($finalDimensionScores)->avg();
-            $behaviorScore100 = ($averageBehavior / 5) * 100;
-
-            $dimensionString = collect($finalDimensionScores)->map(function($score, $dimName) {
-                return "- {$dimName}: " . number_format($score, 2) . "/5.0";
-            })->implode("\n");
-        }
-
-        // Hitung Portofolio & Akhir
-        $portfolios = Portfolio::where('user_id', $user->id)->get();
-        $portfolioScore = min($portfolios->sum('score'), 100);
-        $finalScore = number_format(($behaviorScore100 * 0.70) + ($portfolioScore * 0.30), 2);
-
-        // Tentukan Bintang
-        if ($finalScore >= 91) $stars = "7 Bintang";
-        elseif ($finalScore >= 86) $stars = "6 Bintang";
-        elseif ($finalScore >= 80) $stars = "5 Bintang";
-        elseif ($finalScore >= 72) $stars = "4 Bintang";
-        elseif ($finalScore >= 65) $stars = "3 Bintang";
-        elseif ($finalScore >= 55) $stars = "2 Bintang";
-        else $stars = "1 Bintang";
-
-        return [
-            'behaviorScore100' => $behaviorScore100,
-            'portfolioScore' => $portfolioScore,
-            'finalScore' => $finalScore,
-            'stars' => $stars,
-            'dimensionString' => $dimensionString,
-            'portfolios' => $portfolios,
-            'dimensionDetails' => $finalDimensionScores // <--- INI DATA BARU YG KITA BUTUHKAN
-        ];
-    }
+    public function __construct(
+        private AssessmentScoreService $scoreService,
+        private AiNarrativeService $narrativeService
+    ) {}
 
     // =========================================================================
     // HALAMAN DASHBOARD UTAMA
@@ -115,7 +55,7 @@ class UserDashboardController extends Controller
     
     // 2. Ambil Data Portofolio (Pakai Fungsi Privat)
     $categories = PortfolioController::getCategories();
-    $realtimeData = $this->calculateRealtimeScores($user, $period);
+    $realtimeData = $this->scoreService->calculate($user, $period);
     
     $myPortfolios = $realtimeData['portfolios']->keyBy('category');
     $currentPortfolioScore = $realtimeData['portfolioScore'];
@@ -248,7 +188,7 @@ class UserDashboardController extends Controller
         if (!$period) return back()->with('error', 'Tidak ada periode aktif.');
 
         // 1. Ambil Data Realtime
-        $data = $this->calculateRealtimeScores($user, $period);
+        $data = $this->scoreService->calculate($user, $period);
 
         // 2. Cek Perubahan (Server Side Check)
         $lastAnalysis = AiAnalysis::where('user_id', $user->id)
@@ -279,9 +219,8 @@ class UserDashboardController extends Controller
         }
         $portfolioDetailString = implode("\n", $portfolioStringLines);
 
-        // --- INTEGRASI AI (GEMINI 2.0 FLASH) ---
-        $aiNarrative = null; // Inisialisasi NULL agar aman
-        
+        // --- INTEGRASI AI (GEMINI 2.5 FLASH) ---
+
         $prompt = "Bertindaklah sebagai Konsultan SDM Universitas profesional. 
         DATA PROFIL:
         Nama: {$user->name}
@@ -299,39 +238,7 @@ class UserDashboardController extends Controller
         2. **Celah Kinerja (Gap)**: Soroti portofolio apa yang BELUM dikumpulkan atau nilai 360 yang rendah.
         3. **Rekomendasi**: 3 langkah konkret untuk melengkapi kekurangan tersebut.";
 
-        try {
-            $apiKey = config('gemini.api_key');
-
-            if ($apiKey) {
-                // PERUBAHAN: Timeout dinaikkan jadi 60 detik
-                $response = Http::timeout(60) 
-                    ->connectTimeout(10)      
-                    ->withHeaders(['Content-Type' => 'application/json'])
-                    ->post(config('gemini.base_uri')."/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
-                        'contents' => [['parts' => [['text' => $prompt]]]]
-                    ]);
-
-                if ($response->successful()) {
-                    $json = $response->json();
-                    if(isset($json['candidates'][0]['content']['parts'][0]['text'])) {
-                        $aiNarrative = $json['candidates'][0]['content']['parts'][0]['text'];
-                    }
-                }
-            }
-
-        } catch (ConnectionException $e) {
-            // Update pesan errornya juga agar sesuai
-            $aiNarrative = "Waktu analisis habis (timeout > 60 detik). Silakan coba lagi nanti.";
-            Log::error('Gemini Timeout: ' . $e->getMessage());
-            
-        } catch (\Exception $e) {
-            Log::error('Gemini API Error: ' . $e->getMessage());
-        }
-
-        // Safety Net
-        if (empty($aiNarrative)) {
-             $aiNarrative = "Analisis AI belum tersedia saat ini. Namun skor Anda telah berhasil dihitung dan disimpan.";
-        }
+        $aiNarrative = $this->narrativeService->generate($prompt);
 
         // 5. Simpan Hasil
         AiAnalysis::updateOrCreate(
@@ -366,7 +273,7 @@ class UserDashboardController extends Controller
 
         // Hitung ulang rincian detail agar bisa ditampilkan di view
         // (Kita hitung on-the-fly agar tidak perlu ubah struktur tabel database)
-        $realtimeData = $this->calculateRealtimeScores($user, $period);
+        $realtimeData = $this->scoreService->calculate($user, $period);
         $dimensionDetails = $realtimeData['dimensionDetails'];
 
         return view('result_7stars', compact('analysis', 'dimensionDetails'));
@@ -388,7 +295,7 @@ class UserDashboardController extends Controller
         if (! $period) {
             return back()->with('error', 'Tidak ada periode penilaian aktif.');
         }
-        $realtimeData = $this->calculateRealtimeScores($user, $period);
+        $realtimeData = $this->scoreService->calculate($user, $period);
         $dimensionDetails = $realtimeData['dimensionDetails'];
 
         // Load View khusus PDF

@@ -10,11 +10,13 @@ use App\Models\AiAnalysis;
 use App\Models\AssessmentPeriod;
 use App\Http\Controllers\UserDashboardController;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\AssessmentScoreService;
 
 class JurusanController extends Controller
 {
+    public function __construct(private AssessmentScoreService $scoreService) {}
+
     // 1. HALAMAN DASHBOARD (Hanya Statistik)
     public function dashboard()
     {
@@ -111,24 +113,12 @@ class JurusanController extends Controller
 
         // --- LOGIKA HITUNG RINCIAN (AGAR ACCORDION MUNCUL) ---
         $period = \App\Models\AssessmentPeriod::where('is_active', true)->first();
-        
-        $rawScores = \Illuminate\Support\Facades\DB::table('assessment_responses')
-            ->join('assessment_requests', 'assessment_responses.assessment_request_id', '=', 'assessment_requests.id')
-            ->join('master_questions', 'assessment_responses.master_question_id', '=', 'master_questions.id')
-            ->where('assessment_requests.user_id', $userId)
-            ->where('assessment_requests.assessment_period_id', $period->id)
-            ->where('assessment_requests.is_completed', true)
-            ->select('master_questions.dimension', \Illuminate\Support\Facades\DB::raw('AVG(assessment_responses.score) as avg_score'))
-            ->groupBy('master_questions.dimension', 'assessment_requests.relationship')
-            ->get();
 
-        $dimensionDetails = [];
-        if ($rawScores->isNotEmpty()) {
-            $groupedByDimension = $rawScores->groupBy('dimension');
-            foreach ($groupedByDimension as $dimension => $items) {
-                $dimensionDetails[$dimension] = $items->avg('avg_score');
-            }
+        if (! $period) {
+            return back()->with('error', 'Tidak ada periode penilaian aktif.');
         }
+
+        $dimensionDetails = $this->scoreService->dimensionScores($dosen->id, $period);
         // -----------------------------------------------------
 
         return view('jurusan.verifikasi.result', compact('dosen', 'analysis', 'dimensionDetails'));
@@ -148,30 +138,14 @@ class JurusanController extends Controller
         $setting = UniversitySetting::first();
 
         // 3. Hitung Ulang Rincian Skor (Agar detail bar chart muncul)
-        
+
         $period = AssessmentPeriod::where('is_active', true)->first();
-        
-        // --- LOGIKA HITUNG SKOR (COPY DARI USERDASHBOARD) ---
-        $rawScores = \Illuminate\Support\Facades\DB::table('assessment_responses')
-            ->join('assessment_requests', 'assessment_responses.assessment_request_id', '=', 'assessment_requests.id')
-            ->join('master_questions', 'assessment_responses.master_question_id', '=', 'master_questions.id')
-            ->where('assessment_requests.user_id', $userId) // Pakai ID Dosen
-            ->where('assessment_requests.assessment_period_id', $period->id)
-            ->where('assessment_requests.is_completed', true)
-            ->select('master_questions.dimension', DB::raw('AVG(assessment_responses.score) as avg_score'))
-            ->groupBy('master_questions.dimension', 'assessment_requests.relationship')
-            ->get();
 
-        $finalDimensionScores = [];
-        if ($rawScores->isNotEmpty()) {
-            $groupedByDimension = $rawScores->groupBy('dimension');
-            foreach ($groupedByDimension as $dimension => $items) {
-                $finalDimensionScores[$dimension] = $items->avg('avg_score');
-            }
+        if (! $period) {
+            return back()->with('error', 'Tidak ada periode penilaian aktif.');
         }
-        // ----------------------------------------------------
 
-        $dimensionDetails = $finalDimensionScores;
+        $dimensionDetails = $this->scoreService->dimensionScores($dosen->id, $period);
         $user = $dosen; // Variable view butuh nama $user
 
         // 4. Load View PDF yang SAMA dengan milik Dosen
