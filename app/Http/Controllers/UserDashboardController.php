@@ -300,15 +300,14 @@ class UserDashboardController extends Controller
         3. **Rekomendasi**: 3 langkah konkret untuk melengkapi kekurangan tersebut.";
 
         try {
-            $apiKey = env('GEMINI_API_KEY');
+            $apiKey = config('gemini.api_key');
 
             if ($apiKey) {
                 // PERUBAHAN: Timeout dinaikkan jadi 60 detik
                 $response = Http::timeout(60) 
                     ->connectTimeout(10)      
-                    ->withoutVerifying()
                     ->withHeaders(['Content-Type' => 'application/json'])
-                    ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
+                    ->post(config('gemini.base_uri')."/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
                         'contents' => [['parts' => [['text' => $prompt]]]]
                     ]);
 
@@ -354,6 +353,10 @@ class UserDashboardController extends Controller
         $user = Auth::user();
         $period = AssessmentPeriod::where('is_active', true)->first(); // Pastikan ada period
 
+        if (!$period) {
+            return redirect()->route('dashboard.index')->with('error', 'Tidak ada periode penilaian aktif.');
+        }
+
         // Ambil hasil simpanan DB
         $analysis = AiAnalysis::where('user_id', $user->id)->latest()->first();
 
@@ -382,6 +385,9 @@ class UserDashboardController extends Controller
 
         // Siapkan Data View (Mirip showResult tapi untuk PDF)
         $period = AssessmentPeriod::where('is_active', true)->first();
+        if (! $period) {
+            return back()->with('error', 'Tidak ada periode penilaian aktif.');
+        }
         $realtimeData = $this->calculateRealtimeScores($user, $period);
         $dimensionDetails = $realtimeData['dimensionDetails'];
 
