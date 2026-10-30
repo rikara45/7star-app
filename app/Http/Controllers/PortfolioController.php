@@ -23,7 +23,7 @@ class PortfolioController extends Controller
 
     public function store(StorePortfolioRequest $request)
     {
-        $filePath = $request->file('file')->store('portfolios', 'public');
+        $filePath = $request->file('file')->store('portfolios', 'local');
 
         // Kita pakai updateOrCreate agar user bisa menimpa file lama jika upload lagi di kategori yang sama
         Portfolio::updateOrCreate(

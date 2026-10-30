@@ -55,4 +55,26 @@ class PortfolioUploadTest extends TestCase
             'score' => 0,
         ]);
     }
+
+    public function test_unggahan_baru_tersimpan_di_disk_privat(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $category = array_key_first(PortfolioCategories::all());
+
+        $this->actingAs($dosen)
+            ->post(route('portfolio.store'), [
+                'category' => $category,
+                'file' => UploadedFile::fake()->create('bukti.pdf', 100, 'application/pdf'),
+            ])
+            ->assertRedirect();
+
+        $portfolio = $dosen->portfolios()->firstOrFail();
+
+        $this->assertStringStartsWith('portfolios/', $portfolio->file_path);
+        Storage::disk('local')->assertExists($portfolio->file_path);
+        Storage::disk('public')->assertMissing($portfolio->file_path);
+    }
 }
