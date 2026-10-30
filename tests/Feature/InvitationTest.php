@@ -289,6 +289,21 @@ class InvitationTest extends TestCase
             ->assertSee('Sejawat (0/9)');
     }
 
+    public function test_undangan_di_luar_kuota_tidak_menyisakan_baris(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        $this->existingInvitations($dosen, 'superior', 2);
+
+        $this->actingAs($dosen)
+            ->from(route('dashboard.index'))
+            ->post(route('dashboard.invite'), $this->payload('superior', 'atasan3@example.test'))
+            ->assertSessionHas('error');
+
+        $this->assertSame(2, $this->invitationCount($dosen, 'superior'));
+        Mail::assertNothingSent();
+    }
+
     public function test_undangan_tanpa_periode_aktif_ditolak_dengan_pesan(): void
     {
         Mail::fake();
