@@ -181,6 +181,32 @@ class AdminUserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
+    public function test_admin_tidak_bisa_menghapus_dirinya_sendiri(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->from(route('admin.users.index'))
+            ->delete(route('admin.users.destroy', $admin))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'role' => 'admin']);
+    }
+
+    public function test_admin_bisa_menghapus_admin_lain(): void
+    {
+        $admin = $this->admin();
+        $lain = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->from(route('admin.users.index'))
+            ->delete(route('admin.users.destroy', $lain))
+            ->assertSessionHas('success', 'User berhasil dihapus.');
+
+        $this->assertDatabaseMissing('users', ['id' => $lain->id]);
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'role' => 'admin']);
+    }
+
     public function test_non_admin_ditolak_untuk_semua_aksi_admin(): void
     {
         $target = User::factory()->create(['role' => 'dosen']);
@@ -232,9 +258,13 @@ class AdminUserManagementTest extends TestCase
     {
         $admin = $this->admin();
         $dosen = User::factory()->create(['role' => 'dosen']);
+        $lain = User::factory()->create(['role' => 'dosen']);
 
         $this->assertTrue(Gate::forUser($admin)->allows('manage', User::class));
         $this->assertTrue(Gate::forUser($dosen)->denies('manage', User::class));
+        $this->assertTrue(Gate::forUser($admin)->allows('delete', $lain));
+        $this->assertTrue(Gate::forUser($admin)->denies('delete', $admin));
+        $this->assertTrue(Gate::forUser($dosen)->denies('delete', $lain));
     }
 
     public function test_email_milik_orang_lain_ditolak_saat_update(): void

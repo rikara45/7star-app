@@ -55,9 +55,13 @@ Perubahan yang disengaja (dicatat):
   non-admin tidak memicu penulisan baris.
 - Password saat **update** kini `nullable|string|min:6` (dulu tanpa batas). Ini perubahan perilaku yang
   disengaja agar konsisten dengan pembuatan user; password lama tidak berubah bila validasi gagal.
+- Admin **tidak bisa menghapus akunnya sendiri** (`UserPolicy@delete`). View memang sudah menyembunyikan
+  tombolnya, tapi route langsung dulu tetap menghapus; di shared hosting tanpa SSH, kehilangan admin
+  terakhir berarti pemulihan lewat database. Menghapus admin lain tetap boleh.
 
 Di luar cakupan (risiko dicatat, bukan diubah di irisan ini):
-- Admin masih bisa menghapus dirinya sendiri atau admin terakhir → bisa kehilangan akses.
+- Admin masih bisa menurunkan role dirinya sendiri menjadi `dosen` lewat edit, sehingga tidak ada admin
+  tersisa. Penjagaan serupa untuk `update` belum dibuat.
 - Hapus user tetap menghapus data terkait lewat cascade (portofolio, undangan, analisis); konfirmasi
   di view sudah menyebut "beserta seluruh datanya".
 - `unit_kerja` tidak ada di form admin, jadi tidak diubah.
