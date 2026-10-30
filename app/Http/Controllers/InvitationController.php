@@ -42,6 +42,12 @@ class InvitationController extends Controller
             return back()->with('error', 'Tidak bisa membatalkan penilaian yang sudah selesai.');
         }
 
+        // Menghapus undangan ikut menghapus jawabannya lewat cascade; jawaban
+        // parsial tetap data penilai yang tidak boleh hilang diam-diam.
+        if ($assessmentRequest->responses()->exists()) {
+            return back()->with('error', 'Tidak bisa membatalkan undangan yang sudah diisi.');
+        }
+
         $assessmentRequest->delete();
 
         return back()->with('success', 'Undangan berhasil dibatalkan.');

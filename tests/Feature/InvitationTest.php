@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Mail\AssessmentInvitation;
 use App\Models\AssessmentPeriod;
+use App\Models\AssessmentResponse;
+use App\Models\MasterQuestion;
 use App\Models\AssessmentRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -358,6 +360,31 @@ class InvitationTest extends TestCase
             ->assertSessionHas('error', 'Tidak bisa membatalkan penilaian yang sudah selesai.');
 
         $this->assertDatabaseHas('assessment_requests', ['id' => $invitation->id]);
+    }
+
+    public function test_tidak_bisa_membatalkan_undangan_yang_sudah_berisi_jawaban(): void
+    {
+        $dosen = $this->dosen();
+        $invitation = $this->oneInvitation($dosen, 'peer');
+
+        AssessmentResponse::forceCreate([
+            'assessment_request_id' => $invitation->id,
+            'master_question_id' => MasterQuestion::forceCreate([
+                'dimension' => 'Profesionalisme',
+                'statement_self' => 'Pernyataan self',
+                'statement_other' => 'Pernyataan other',
+            ])->id,
+            'score' => 4,
+        ]);
+
+        $this->actingAs($dosen)
+            ->from(route('dashboard.index'))
+            ->delete(route('invite.destroy', $invitation->id))
+            ->assertRedirect(route('dashboard.index'))
+            ->assertSessionHas('error', 'Tidak bisa membatalkan undangan yang sudah diisi.');
+
+        $this->assertDatabaseHas('assessment_requests', ['id' => $invitation->id]);
+        $this->assertSame(1, AssessmentResponse::where('assessment_request_id', $invitation->id)->count());
     }
 
     public function test_non_owner_tetap_403_untuk_undangan_yang_selesai(): void
