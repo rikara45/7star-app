@@ -16,10 +16,11 @@ return new class extends Migration
         }
 
         // Baris yang selesai sebelum kolom ini ada memakai updated_at sebagai perkiraan.
+        // Bila keduanya kosong, biarkan NULL: waktu selesai tidak boleh dikarang saat deploy.
         DB::table('assessment_requests')
             ->where('is_completed', true)
             ->whereNull('completed_at')
-            ->update(['completed_at' => DB::raw('COALESCE(updated_at, created_at, CURRENT_TIMESTAMP)')]);
+            ->update(['completed_at' => DB::raw('COALESCE(updated_at, created_at)')]);
     }
 
     public function down(): void
