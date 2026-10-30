@@ -141,7 +141,7 @@ class JurusanController extends Controller
         $pdf = Pdf::loadView('pdf.report', [
             'user' => $dosen,
             'analysis' => $data['analysis'],
-            'setting' => UniversitySetting::first(),
+            'setting' => UniversitySetting::current(),
             'dimensionDetails' => $data['dimensionDetails'],
         ]);
 

@@ -235,6 +235,17 @@ class AssessmentResultTest extends TestCase
             ->assertSessionHas('error', 'Belum ada hasil untuk dicetak.');
     }
 
+    public function test_pdf_tetap_tercetak_saat_pengaturan_kampus_kosong(): void
+    {
+        [$user] = $this->dosenWithAnalysis();
+        UniversitySetting::query()->delete();
+
+        $response = $this->actingAs($user)->get(route('result.pdf'));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+    }
+
     private function dosenWithAnalysis(bool $analysis = true): array
     {
         [$user, $period] = $this->dosenWithScores([5, 4]);
