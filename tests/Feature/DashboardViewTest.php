@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\AssessmentPeriod;
 use App\Models\AssessmentRequest;
+use App\Models\Portfolio;
 use App\Models\User;
+use App\Support\PortfolioCategories;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Str;
@@ -13,6 +15,17 @@ use Tests\TestCase;
 class DashboardViewTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Kuota dipatok supaya test tidak bergantung pada isi .env mesin lain.
+        config([
+            'assessment.invitation.max_superior' => 2,
+            'assessment.invitation.max_peer' => 5,
+        ]);
+    }
 
     public function test_dashboard_menampilkan_semua_bagian_utama(): void
     {
@@ -36,10 +49,48 @@ class DashboardViewTest extends TestCase
             ->assertSee('Total: 2')
             ->assertSee('Atasan Uji')
             ->assertSee('Sejawat Uji')
-            ->assertSee('Selesai')
-            ->assertSee('Pending')
+            ->assertSee('Isi Kuesioner Sekarang')
+            // Badge status memakai komponen bersama, bukan teks lepas.
+            ->assertSee('bg-green-50 text-green-700 border-green-100', false)
+            ->assertSee('bg-gray-100 text-gray-600 border-transparent', false)
             ->assertSee('Belum Upload')
-            ->assertSee('Isi Kuesioner Sekarang');
+            // Syarat belum terpenuhi: tombol proses tidak muncul.
+            ->assertSee('Validasi Data Belum Terpenuhi')
+            ->assertSee('Minimal 3 Sejawat (Saat ini:', false)
+            ->assertDontSee('Proses Hasil & Analisis AI');
+    }
+
+    public function test_dashboard_menampilkan_tombol_proses_saat_syarat_terpenuhi(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $period = AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+
+        $this->undangan($dosen, $period, 'self', 'Dosen Uji', $dosen->email, true);
+        $this->undangan($dosen, $period, 'superior', 'Atasan Uji', 'atasan@example.test', true);
+
+        foreach (['Sejawat Satu', 'Sejawat Dua', 'Sejawat Tiga'] as $i => $nama) {
+            $this->undangan($dosen, $period, 'peer', $nama, 'sejawat'.$i.'@example.test', true);
+        }
+
+        $categories = array_keys(PortfolioCategories::all());
+
+        foreach (array_slice($categories, 0, 3) as $kategori) {
+            Portfolio::create([
+                'user_id' => $dosen->id,
+                'category' => $kategori,
+                'file_path' => 'portfolios/'.$kategori.'.pdf',
+                'status' => 'verified',
+                'score' => 4,
+            ]);
+        }
+
+        $this->actingAs($dosen)
+            ->get(route('dashboard.index'))
+            ->assertOk()
+            ->assertSee('Proses Hasil & Analisis AI')
+            ->assertSee('Verified (4)')
+            ->assertSee('Ada '.(count($categories) - 3).' kategori kosong', false)
+            ->assertDontSee('Validasi Data Belum Terpenuhi');
     }
 
     public function test_dashboard_tanpa_periode_aktif_mengembalikan_200(): void
@@ -53,23 +104,26 @@ class DashboardViewTest extends TestCase
             ->assertDontSee('Undang Penilai');
     }
 
-    public function test_dashboard_dengan_periode_tidak_aktif_mengembalikan_200(): void
+    public function test_dashboard_mengabaikan_data_periode_yang_tidak_aktif(): void
     {
-        AssessmentPeriod::forceCreate(['name' => 'Periode Lama', 'is_active' => false]);
-
         $dosen = User::factory()->create(['role' => 'dosen']);
+        $lama = AssessmentPeriod::forceCreate(['name' => 'Periode Lama', 'is_active' => false]);
+
+        $this->undangan($dosen, $lama, 'superior', 'Atasan Lama', 'lama@example.test', true);
 
         $this->actingAs($dosen)
             ->get(route('dashboard.index'))
             ->assertOk()
-            ->assertSee('Periode penilaian belum aktif');
+            ->assertSee('Periode penilaian belum aktif')
+            ->assertDontSee('Atasan Lama')
+            ->assertDontSee('Total: 1');
     }
 
     public function test_komponen_bintang_menandai_bintang_kosong(): void
     {
         $html = Blade::render('<x-star-rating rating="4 Bintang" />');
 
-        $this->assertSame(4, substr_count($html, '<span class="">★</span>'), 'Bintang terisi harus 4.');
+        $this->assertSame(7, substr_count($html, '★'), 'Harus ada 7 bintang.');
         $this->assertSame(3, substr_count($html, 'text-gray-200'), 'Sisa bintang harus 3.');
     }
 

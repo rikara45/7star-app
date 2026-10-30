@@ -25,8 +25,8 @@
                 @else
                     <form action="{{ route('dashboard.invite') }}" method="POST">
                         @csrf
-                        <input type="hidden" name="name" value="{{ Auth::user()->name }}">
-                        <input type="hidden" name="email" value="{{ Auth::user()->email }}">
+                        <input type="hidden" name="name" value="{{ $user->name }}">
+                        <input type="hidden" name="email" value="{{ $user->email }}">
                         <input type="hidden" name="relationship" value="self">
                         <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Mulai Self Assessment</button>
                     </form>

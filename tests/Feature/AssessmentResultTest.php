@@ -167,11 +167,16 @@ class AssessmentResultTest extends TestCase
     {
         [$user] = $this->dosenWithAnalysis();
 
-        $this->actingAs($user)
+        $response = $this->actingAs($user)
             ->get(route('result.show'))
             ->assertOk()
             ->assertSee('Profesionalisme')
-            ->assertSee('4.50');
+            ->assertSee('4.50')
+            ->assertSee('2 Bintang');
+
+        $html = $response->getContent();
+        $this->assertSame(7, substr_count($html, '★'), 'Komponen bintang harus tetap dirender.');
+        $this->assertSame(5, substr_count($html, 'text-gray-200'), 'Dua bintang terisi, lima kosong.');
     }
 
     public function test_halaman_hasil_mengalihkan_bila_belum_ada_analisis(): void
