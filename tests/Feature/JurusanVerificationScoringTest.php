@@ -56,9 +56,10 @@ class JurusanVerificationScoringTest extends TestCase
         $period->forceFill(['is_active' => false])->save();
 
         $this->actingAs($jurusan)
+            ->from(route('jurusan.verifikasi.index'))
             ->get(route('jurusan.result', $dosen->id))
-            ->assertRedirect()
-            ->assertSessionHas('error');
+            ->assertRedirect(route('jurusan.verifikasi.index'))
+            ->assertSessionHas('error', 'Tidak ada periode penilaian aktif.');
     }
 
     public function test_rincian_dimensi_jurusan_identik_dengan_halaman_hasil_dosen(): void
@@ -77,7 +78,7 @@ class JurusanVerificationScoringTest extends TestCase
         $this->assertSame($dosenDetails, $jurusanDetails);
     }
 
-    public function test_pdf_jurusan_terunduh_dengan_nama_berkas_yang_sama(): void
+    public function test_pdf_jurusan_memakai_nama_berkas_laporan(): void
     {
         [$dosen, $jurusan] = $this->dosenDanJurusan();
 
@@ -89,6 +90,32 @@ class JurusanVerificationScoringTest extends TestCase
             'Laporan_'.$dosen->name.'.pdf',
             (string) $response->headers->get('content-disposition')
         );
+    }
+
+    public function test_pdf_jurusan_mengalihkan_bila_belum_ada_analisis(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $jurusan = User::factory()->create(['role' => 'jurusan']);
+        AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+
+        $this->actingAs($jurusan)
+            ->from(route('jurusan.verifikasi.index'))
+            ->get(route('jurusan.result.pdf', $dosen->id))
+            ->assertRedirect(route('jurusan.verifikasi.index'))
+            ->assertSessionHas('error', 'Dosen ini belum memproses hasil analisis.');
+    }
+
+    public function test_pdf_jurusan_mengalihkan_saat_tidak_ada_periode_aktif(): void
+    {
+        [$dosen, $jurusan] = $this->dosenDanJurusan();
+
+        AssessmentPeriod::where('is_active', true)->update(['is_active' => false]);
+
+        $this->actingAs($jurusan)
+            ->from(route('jurusan.verifikasi.index'))
+            ->get(route('jurusan.result.pdf', $dosen->id))
+            ->assertRedirect(route('jurusan.verifikasi.index'))
+            ->assertSessionHas('error', 'Tidak ada periode penilaian aktif.');
     }
 
     public function test_hasil_jurusan_mengalihkan_bila_dosen_belum_punya_analisis(): void
