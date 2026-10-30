@@ -14,6 +14,22 @@
     <div class="bg-white shadow-lg rounded-xl p-8 mb-8 border-t-4 border-indigo-600">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Instrumen Penilaian 360°</h1>
         <p class="text-gray-600 mb-6">Klasifikasi Penilaian 7 Bintang – Transformational Leadership Rating</p>
+
+        @if(session('status'))
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-5 py-4 mb-6 text-sm font-medium">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-5 py-4 mb-6">
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         
         <div class="bg-indigo-50 p-5 rounded-lg border border-indigo-100">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -64,7 +80,7 @@
                                 <div class="flex justify-between items-center w-full sm:w-auto gap-2 bg-gray-100 p-2 rounded-full px-6">
                                     @for ($i = 1; $i <= 5; $i++)
                                         <label class="cursor-pointer group relative">
-                                            <input type="radio" name="answers[{{ $q->id }}]" value="{{ $i }}" class="peer sr-only" required>
+                                            <input type="radio" name="answers[{{ $q->id }}]" value="{{ $i }}" class="peer sr-only" required @checked(($savedAnswers[$q->id] ?? null) == $i)>
                                             
                                             <div class="w-10 h-10 flex items-center justify-center rounded-full bg-white border-2 border-gray-300 text-gray-400 font-bold transition-all duration-200 
                                                         peer-checked:bg-indigo-600 peer-checked:border-indigo-600 peer-checked:text-white peer-checked:scale-110
@@ -124,7 +140,7 @@
                 <p class="text-sm text-gray-500">
                     Apakah Anda yakin ingin mengirim penilaian ini? 
                     <br>
-                    <span class="text-red-500 font-semibold">Data tidak dapat diubah setelah dikirim.</span>
+                    <span class="text-red-500 font-semibold">Data tidak dapat diubah setelah seluruh pertanyaan terjawab.</span>
                 </p>
             </div>
 
