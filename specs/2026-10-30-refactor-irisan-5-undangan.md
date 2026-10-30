@@ -47,8 +47,11 @@ owner diperiksa **sebelum** status selesai supaya non-owner tidak bisa menebak s
 orang lain (tetap 403).
 
 Nilai config tidak boleh membuat sistem rusak: `InvitationService` memakai batas bawah
-`token_length >= 16` dan kuota `>= 1`, sehingga config cache basi (key belum ada) atau nilai 0
-tidak menghasilkan token kosong (unique index `access_token` → 500) atau memblokir semua undangan.
+`token_length >= 16` dan kuota `>= 1`, serta batas atas `token_length <= 64` (lebar kolom
+`access_token`), sehingga config cache basi (key belum ada), nilai 0, atau nilai terlalu panjang
+tidak menghasilkan token kosong (unique index `access_token` → 500), token terpotong MySQL strict
+mode, atau memblokir semua undangan. `config/assessment.php` memakai `?: default` supaya env yang
+ada tapi kosong jatuh ke default 2/5/32, dan ketiga knob didokumentasikan di `.env.example`.
 Dashboard juga mengirim `maxSuperior`/`maxPeer` dari config supaya label dan status "Penuh" di form
 tidak bertentangan dengan aturan backend.
 
