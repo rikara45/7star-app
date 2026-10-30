@@ -61,6 +61,63 @@ class JurusanVerificationScoringTest extends TestCase
             ->assertSessionHas('error');
     }
 
+    public function test_rincian_dimensi_jurusan_identik_dengan_halaman_hasil_dosen(): void
+    {
+        [$dosen, $jurusan] = $this->dosenDanJurusan();
+
+        $dosenDetails = $this->actingAs($dosen)
+            ->get(route('result.show'))
+            ->viewData('dimensionDetails');
+
+        $jurusanDetails = $this->actingAs($jurusan)
+            ->get(route('jurusan.result', $dosen->id))
+            ->assertOk()
+            ->viewData('dimensionDetails');
+
+        $this->assertSame($dosenDetails, $jurusanDetails);
+    }
+
+    public function test_pdf_jurusan_terunduh_dengan_nama_berkas_yang_sama(): void
+    {
+        [$dosen, $jurusan] = $this->dosenDanJurusan();
+
+        $response = $this->actingAs($jurusan)->get(route('jurusan.result.pdf', $dosen->id));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+        $this->assertStringContainsString(
+            'Laporan_'.$dosen->name.'.pdf',
+            (string) $response->headers->get('content-disposition')
+        );
+    }
+
+    public function test_hasil_jurusan_mengalihkan_bila_dosen_belum_punya_analisis(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $jurusan = User::factory()->create(['role' => 'jurusan']);
+        AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+
+        $this->actingAs($jurusan)
+            ->from(route('jurusan.verifikasi.index'))
+            ->get(route('jurusan.result', $dosen->id))
+            ->assertRedirect(route('jurusan.verifikasi.index'))
+            ->assertSessionHas('error', 'Dosen ini belum melakukan proses analisis hasil.');
+    }
+
+    private function dosenDanJurusan(): array
+    {
+        $dosen = User::factory()->create(['role' => 'dosen', 'name' => 'Dosen Uji']);
+        $jurusan = User::factory()->create(['role' => 'jurusan', 'name' => 'Jurusan Uji']);
+        $period = AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+
+        $this->responses($dosen, $period, 'superior', 'Profesionalisme', [5, 5]);
+        $this->responses($dosen, $period, 'peer', 'Profesionalisme', [3, 3]);
+        $this->responses($dosen, $period, 'superior', 'Kolaborasi', [2, 4]);
+        $this->storedAnalysis($dosen, $period);
+
+        return [$dosen, $jurusan];
+    }
+
     private function responses(User $user, AssessmentPeriod $period, string $relationship, string $dimension, array $scores): void
     {
         $request = AssessmentRequest::forceCreate([

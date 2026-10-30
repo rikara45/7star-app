@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AiAnalysis;
 use App\Models\AssessmentPeriod;
 use App\Models\Portfolio;
 use App\Models\UniversitySetting;
 use App\Models\User;
-use App\Services\AssessmentScoreService;
+use App\Services\AssessmentResultService;
 use App\Support\PortfolioCategories;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class JurusanController extends Controller
 {
-    public function __construct(private AssessmentScoreService $scoreService) {}
+    public function __construct(private AssessmentResultService $results) {}
 
     // 1. HALAMAN DASHBOARD (Hanya Statistik)
     public function dashboard()
@@ -104,53 +103,48 @@ class JurusanController extends Controller
     public function viewResult($userId)
     {
         $dosen = User::findOrFail($userId);
-        $analysis = \App\Models\AiAnalysis::where('user_id', $userId)->latest()->first();
-
-        if (! $analysis) {
-            return back()->with('error', 'Dosen ini belum melakukan proses analisis hasil.');
-        }
-
-        // --- LOGIKA HITUNG RINCIAN (AGAR ACCORDION MUNCUL) ---
-        $period = \App\Models\AssessmentPeriod::where('is_active', true)->first();
-
-        if (! $period) {
-            return back()->with('error', 'Tidak ada periode penilaian aktif.');
-        }
-
-        $dimensionDetails = $this->scoreService->dimensionScores($dosen->id, $period);
-        // -----------------------------------------------------
-
-        return view('jurusan.verifikasi.result', compact('dosen', 'analysis', 'dimensionDetails'));
-    }
-
-    public function exportPdf($userId)
-    {
-        $dosen = User::findOrFail($userId);
-
-        // 1. Ambil Hasil Analisis
-        $analysis = AiAnalysis::where('user_id', $userId)->latest()->first();
-        if (! $analysis) {
-            return back()->with('error', 'Dosen ini belum memproses hasil analisis.');
-        }
-
-        // 2. Ambil Setting Kampus
-        $setting = UniversitySetting::first();
-
-        // 3. Hitung Ulang Rincian Skor (Agar detail bar chart muncul)
-
         $period = AssessmentPeriod::where('is_active', true)->first();
 
         if (! $period) {
             return back()->with('error', 'Tidak ada periode penilaian aktif.');
         }
 
-        $dimensionDetails = $this->scoreService->dimensionScores($dosen->id, $period);
-        $user = $dosen; // Variable view butuh nama $user
+        $data = $this->results->viewDataFor($dosen, $period);
 
-        // 4. Load View PDF yang SAMA dengan milik Dosen
-        $pdf = Pdf::loadView('pdf.report', compact('user', 'analysis', 'setting', 'dimensionDetails'));
+        if ($data === null) {
+            return back()->with('error', 'Dosen ini belum melakukan proses analisis hasil.');
+        }
 
-        // 5. Download
+        return view('jurusan.verifikasi.result', [
+            'dosen' => $dosen,
+            'analysis' => $data['analysis'],
+            'dimensionDetails' => $data['dimensionDetails'],
+        ]);
+    }
+
+    public function exportPdf($userId)
+    {
+        $dosen = User::findOrFail($userId);
+        $period = AssessmentPeriod::where('is_active', true)->first();
+
+        if (! $period) {
+            return back()->with('error', 'Tidak ada periode penilaian aktif.');
+        }
+
+        $data = $this->results->viewDataFor($dosen, $period);
+
+        if ($data === null) {
+            return back()->with('error', 'Dosen ini belum memproses hasil analisis.');
+        }
+
+        // View PDF yang SAMA dengan milik dosen, supaya angka tidak bisa berbeda.
+        $pdf = Pdf::loadView('pdf.report', [
+            'user' => $dosen,
+            'analysis' => $data['analysis'],
+            'setting' => UniversitySetting::first(),
+            'dimensionDetails' => $data['dimensionDetails'],
+        ]);
+
         return $pdf->download('Laporan_'.$dosen->name.'.pdf');
     }
 }
