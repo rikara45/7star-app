@@ -29,7 +29,7 @@ class UserDashboardController extends Controller
 
         $countSuperior = $requests->where('relationship', 'superior')->count();
         $countPeer = $requests->where('relationship', 'peer')->count();
-        $assessorCount = $requests->where('relationship', '!=', 'self')->count();
+        $assessorCount = $countSuperior + $countPeer;
         $maxSuperior = max(1, (int) config('assessment.invitation.max_superior', 2));
         $maxPeer = max(1, (int) config('assessment.invitation.max_peer', 5));
 
@@ -69,7 +69,7 @@ class UserDashboardController extends Controller
         }
 
         return view('dashboard_7stars', compact(
-            'requests', 'selfRequest', 'period',
+            'requests', 'selfRequest', 'user',
             'myPortfolios', 'categories', 'currentPortfolioScore',
             'pendingCount', 'missingCount',
             'countSuperior', 'countPeer', 'assessorCount',

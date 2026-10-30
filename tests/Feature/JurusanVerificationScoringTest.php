@@ -35,13 +35,18 @@ class JurusanVerificationScoringTest extends TestCase
 
         $this->storedAnalysis($dosen, $period);
 
-        $this->actingAs($jurusan)
+        $response = $this->actingAs($jurusan)
             ->get(route('jurusan.result', $dosen->id))
             ->assertOk()
+            ->assertSee('4 Bintang')
             ->assertViewHas('dimensionDetails', function (array $details) {
                 return $details['Profesionalisme'] == 4.0
                     && $details['Kolaborasi'] == 3.0;
             });
+
+        $html = $response->getContent();
+        $this->assertSame(7, substr_count($html, '★'), 'Komponen bintang harus tetap dirender.');
+        $this->assertSame(3, substr_count($html, 'text-gray-200'), 'Empat bintang terisi, tiga kosong.');
     }
 
     public function test_verifikasi_jurusan_dialihkan_saat_tidak_ada_periode_aktif(): void

@@ -55,14 +55,30 @@ Perubahan yang disengaja (dicatat):
   menghitung ulang data yang sudah ada di controller.
 - Badge status kini satu komponen: `subtle` memakai latar 50 (Selesai/Pending di daftar penilai),
   varian tegas memakai latar 200 (Verified/Pending di kartu portofolio), ukuran `xs` untuk kartu
-  portofolio, dan `pulse` untuk status yang menunggu verifikasi.
+  portofolio, dan `pulse` untuk status yang menunggu verifikasi. Efek samping tampilan: badge
+  `Pending` di daftar penilai berubah dari `font-medium` ke `font-bold`, dari `flex` ke `inline-flex`,
+  dan bertambah border 1px sehingga lebar/tingginya bergeser sekitar 2px.
+- Warna teks badge abu naik dari `text-gray-400` ke `text-gray-600`: `text-gray-400` di atas
+  `bg-gray-100` hanya sekitar 2:1 dan gagal kontras AA, padahal dipakai untuk "Belum Upload"
+  berukuran 10px.
+- Dua tombol ikon di daftar penilai (salin tautan, batalkan undangan) mendapat `aria-label` berisi
+  nama penilai, `focus-visible` outline, dan padding 6px; sebelumnya hanya `title` dan tanpa cincin
+  fokus.
+- `$period` tidak lagi dikirim ke view (tidak dipakai satu pun partial); `$assessorCount` dihitung
+  dari `$countSuperior + $countPeer` supaya hanya ada satu cara menghitung hal yang sama.
+- Form self-assessment memakai `$user` dari controller, bukan `Auth::user()` di dalam Blade.
 
 ## Verifikasi
 
-- `php artisan test` → 150 passed (532 assertions); Pint PASS 74 files.
-- `tests/Feature/DashboardViewTest.php` (5 test) mengunci: bagian utama dashboard + kuota + badge,
-  dashboard tanpa periode aktif 200, periode tidak aktif 200, 4 bintang terisi/3 kosong, dan warna
-  badge per tone.
+- `php artisan test` → 151 passed (548 assertions); Pint PASS 74 files.
+- `tests/Feature/DashboardViewTest.php` (6 test) mengunci: bagian utama dashboard + kuota + kelas
+  badge komponen, keadaan syarat belum terpenuhi, tombol proses saat syarat terpenuhi, dashboard
+  tanpa periode aktif 200, data periode tidak aktif tidak tampil, 4 bintang terisi/3 kosong, dan
+  warna badge per tone. Kuota dipatok lewat `config()` di `setUp` supaya tidak bergantung `.env`.
+- `AssessmentResultTest` dan `JurusanVerificationScoringTest` kini menghitung 7 bintang dan jumlah
+  bintang kosong dari HTML halaman hasil, jadi kerusakan `x-star-rating` tidak lolos.
+- Mutasi yang dibuktikan memerahkan test: `$filled = 0` pada `x-star-rating` → 3 test gagal;
+  `@if(!$isMinRequirementsMet || $pendingCount > 0)` diganti `@if(true)` → test tombol proses gagal.
 - Browser (`php artisan serve --port=8088`, dosen uji dengan 1 atasan selesai, 1 sejawat pending,
   1 portofolio verified, 1 pending, 1 analisis 4 bintang):
   1. `/dashboard-penilaian`: lima bagian tampil, `Total: 2`, badge `Selesai` (hijau 50), `Pending`
@@ -81,3 +97,8 @@ Perubahan yang disengaja (dicatat):
 - `resources/views/pdf/report.blade.php` tetap memakai markup bintang sendiri (alasan DomPDF di atas).
 - Spec induk menyebut partial "statistik"; yang dibuat adalah header daftar penilai dengan
   `Total: n` karena dashboard ini tidak punya kartu statistik terpisah.
+- Halaman `dashboard/no-period` tidak punya tautan aksi; `InvitationController@store` juga masih
+  `firstOrFail()` → 404 untuk keadaan "tidak ada periode aktif" yang sama. Menyatukan pesannya
+  perlu keputusan tersendiri karena menyentuh alur undangan.
+- Partial diletakkan di `resources/views/dashboard/`, bukan `dashboard/partials/`; namanya sudah
+  dibedakan dari `dashboard.blade.php` bawaan Breeze dan `dashboard_7stars.blade.php`.
