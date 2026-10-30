@@ -101,10 +101,10 @@ Route::middleware(['auth', 'role:dosen'])->group(function () {
 
 // Route untuk Penilaian 360 (Akses via Token, tanpa Login)
 Route::get('/nilai/{token}', [AssessmentController::class, 'show'])
-    ->middleware('throttle:60,1')
+    ->middleware('throttle:assessment-form')
     ->name('assessment.show');
 Route::post('/nilai/{token}', [AssessmentController::class, 'store'])
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:assessment-submit')
     ->name('assessment.store');
 
 // Halaman Status
