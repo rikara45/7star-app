@@ -13,4 +13,13 @@ class UserPolicy
     {
         return $user->role === 'admin';
     }
+
+    /**
+     * Admin tidak boleh menghapus akunnya sendiri. Di shared hosting tanpa SSH,
+     * kehilangan admin terakhir berarti pemulihan harus lewat database.
+     */
+    public function delete(User $user, User $target): bool
+    {
+        return $user->role === 'admin' && ! $user->is($target);
+    }
 }

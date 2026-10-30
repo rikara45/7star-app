@@ -74,7 +74,7 @@ class AdminController extends Controller
 
     public function destroy(User $user)
     {
-        $this->authorize('manage', User::class);
+        $this->authorize('delete', $user);
 
         $user->delete();
 
