@@ -56,6 +56,6 @@ class RegisteredUserController extends Controller
         }
 
         // Default ke dashboard dosen
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard.index');
     }
 }
