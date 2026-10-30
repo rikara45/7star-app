@@ -14,7 +14,11 @@ class InvitationController extends Controller
 
     public function store(StoreInvitationRequest $request)
     {
-        $period = AssessmentPeriod::where('is_active', true)->firstOrFail();
+        $period = AssessmentPeriod::where('is_active', true)->first();
+
+        if (! $period) {
+            return back()->with('error', 'Tidak ada periode aktif.');
+        }
 
         try {
             $result = $this->invitations->invite($request->user(), $period, $request->validated());

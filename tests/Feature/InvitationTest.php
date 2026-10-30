@@ -289,14 +289,16 @@ class InvitationTest extends TestCase
             ->assertSee('Sejawat (0/9)');
     }
 
-    public function test_undangan_tanpa_periode_aktif_404(): void
+    public function test_undangan_tanpa_periode_aktif_ditolak_dengan_pesan(): void
     {
         Mail::fake();
         $dosen = User::factory()->create(['role' => 'dosen']);
 
         $this->actingAs($dosen)
+            ->from(route('dashboard.index'))
             ->post(route('dashboard.invite'), $this->payload('peer', 'x@example.test'))
-            ->assertNotFound();
+            ->assertRedirect(route('dashboard.index'))
+            ->assertSessionHas('error', 'Tidak ada periode aktif.');
 
         $this->assertSame(0, AssessmentRequest::count());
     }

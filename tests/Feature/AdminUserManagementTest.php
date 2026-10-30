@@ -313,6 +313,54 @@ class AdminUserManagementTest extends TestCase
         app(AdminController::class)->usersIndex(Request::create('/admin/users', 'GET'));
     }
 
+    public function test_admin_terakhir_tidak_bisa_diturunkan_menjadi_dosen(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->from(route('admin.users.index'))
+            ->put(route('admin.users.update', $admin), [
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => 'dosen',
+            ])
+            ->assertSessionHasErrors('role');
+
+        $this->assertSame('admin', $admin->fresh()->role, 'Admin terakhir tidak boleh kehilangan akses.');
+    }
+
+    public function test_admin_bisa_diturunkan_bila_masih_ada_admin_lain(): void
+    {
+        $admin = $this->admin();
+        $lain = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $lain), [
+                'name' => $lain->name,
+                'email' => $lain->email,
+                'role' => 'dosen',
+            ])
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertSame('dosen', $lain->fresh()->role);
+    }
+
+    public function test_admin_terakhir_tetap_bisa_diperbarui_tanpa_mengubah_role(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $admin), [
+                'name' => 'Admin Diperbarui',
+                'email' => $admin->email,
+                'role' => 'admin',
+            ])
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertSame('Admin Diperbarui', $admin->fresh()->name);
+        $this->assertSame('admin', $admin->fresh()->role);
+    }
+
     private function admin(): User
     {
         return User::factory()->create(['role' => 'admin']);
