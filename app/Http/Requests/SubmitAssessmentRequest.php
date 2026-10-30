@@ -18,7 +18,7 @@ class SubmitAssessmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answers' => ['required', 'array', 'min:1', $this->knownQuestionIds()],
+            'answers' => ['required', 'array', $this->knownQuestionIds()],
             'answers.*' => ['required', 'integer', 'between:1,5'],
         ];
     }
@@ -31,7 +31,6 @@ class SubmitAssessmentRequest extends FormRequest
         return [
             'answers.required' => 'Belum ada jawaban yang dikirim.',
             'answers.array' => 'Format jawaban tidak dikenali.',
-            'answers.min' => 'Isi minimal satu jawaban.',
             'answers.*.required' => 'Setiap pertanyaan wajib diberi skor.',
             'answers.*.integer' => 'Skor harus berupa angka bulat.',
             'answers.*.between' => 'Skor harus antara 1 sampai 5.',

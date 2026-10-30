@@ -126,6 +126,33 @@ class AssessmentSubmissionTest extends TestCase
         ]);
     }
 
+    public function test_form_menampilkan_jawaban_tersimpan_terpilih(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(2);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 5],
+        ]);
+
+        $this->get(route('assessment.show', $request->access_token))
+            ->assertOk()
+            ->assertSee('Jawaban tersimpan (1 dari 2). Masih ada 1 pertanyaan.')
+            ->assertSee('name="answers['.$questions[0]->id.']" value="5" class="peer sr-only" required checked', false);
+    }
+
+    public function test_form_menampilkan_error_validasi(): void
+    {
+        [$request] = $this->tokenWithQuestions(2);
+
+        $this->from(route('assessment.show', $request->access_token))
+            ->post(route('assessment.store', $request->access_token), ['answers' => []])
+            ->assertSessionHasErrors('answers');
+
+        $this->get(route('assessment.show', $request->access_token))
+            ->assertOk()
+            ->assertSee('Belum ada jawaban yang dikirim.');
+    }
+
     private function tokenWithQuestions(int $count): array
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
