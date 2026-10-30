@@ -15,7 +15,7 @@ class AiAnalysis extends Model
         'final_score',
         'star_rating',
         'ai_narrative',
-        'ai_recommendations' // (Opsional jika nanti dipakai)
+        'ai_recommendations', // (Opsional jika nanti dipakai)
     ];
 
     // Relasi ke User

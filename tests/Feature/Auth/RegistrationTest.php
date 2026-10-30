@@ -23,9 +23,32 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'role' => 'dosen',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'role' => 'dosen',
+        ]);
+        $response->assertRedirect(route('dashboard.index', absolute: false));
+    }
+
+    public function test_jurusan_users_are_redirected_to_their_dashboard_after_registering(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Jurusan User',
+            'email' => 'jurusan@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => 'jurusan',
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'jurusan@example.com',
+            'role' => 'jurusan',
+        ]);
+        $response->assertRedirect(route('jurusan.dashboard', absolute: false));
     }
 }

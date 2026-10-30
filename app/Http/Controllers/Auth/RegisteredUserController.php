@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-use App\Providers\RouteServiceProvider;
 
 class RegisteredUserController extends Controller
 {
@@ -34,14 +33,14 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:dosen,jurusan'], 
+            'role' => ['required', 'string', 'in:dosen,jurusan'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role, 
+            'role' => $request->role,
         ]);
 
         event(new Registered($user));
@@ -56,6 +55,6 @@ class RegisteredUserController extends Controller
         }
 
         // Default ke dashboard dosen
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard.index');
     }
 }
