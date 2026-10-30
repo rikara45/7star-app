@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Support;
 
 use App\Models\MasterQuestion;
-use Illuminate\Foundation\Http\FormRequest;
 
-class SubmitAssessmentRequest extends FormRequest
+/**
+ * Aturan jawaban penilaian dipakai controller setelah token berhasil
+ * diresolusikan, supaya token tak dikenal tetap 404 dan bukan error validasi.
+ */
+final class AssessmentAnswerRules
 {
-    public function authorize(): bool
-    {
-        return true; // route publik dengan token
-    }
-
     /**
      * @return array<string, mixed>
      */
-    public function rules(): array
+    public static function rules(): array
     {
         return [
-            'answers' => ['required', 'array', $this->knownQuestionIds()],
+            'answers' => ['required', 'array', self::knownQuestionIds()],
             'answers.*' => ['required', 'integer', 'between:1,5'],
         ];
     }
@@ -26,7 +24,7 @@ class SubmitAssessmentRequest extends FormRequest
     /**
      * @return array<string, string>
      */
-    public function messages(): array
+    public static function messages(): array
     {
         return [
             'answers.required' => 'Belum ada jawaban yang dikirim.',
@@ -44,7 +42,7 @@ class SubmitAssessmentRequest extends FormRequest
      * Key non-digit ("1.5", "+1", " 1") juga ditolak: key itu lolos bila hanya
      * di-intval(), lalu meledak saat dipakai sebagai master_question_id.
      */
-    private function knownQuestionIds(): \Closure
+    private static function knownQuestionIds(): \Closure
     {
         return function (string $attribute, mixed $value, \Closure $fail): void {
             $known = array_map('intval', MasterQuestion::pluck('id')->all());

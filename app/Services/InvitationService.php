@@ -7,6 +7,7 @@ use App\Mail\AssessmentInvitation;
 use App\Models\AssessmentPeriod;
 use App\Models\AssessmentRequest;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -27,18 +28,25 @@ class InvitationService
     {
         $relationship = $data['relationship'];
 
-        $this->ensureWithinQuota($user, $period, $relationship);
-        $this->ensureNotInvited($user, $period, $data);
+        // Dua permintaan bersamaan bisa sama-sama lolos cek kuota; kunci baris
+        // pengundang agar cek dan pembuatan undangan berjalan berurutan.
+        $invitation = DB::transaction(function () use ($user, $period, $data, $relationship) {
+            User::whereKey($user->getKey())->lockForUpdate()->first();
 
-        $invitation = AssessmentRequest::create([
-            'user_id' => $user->id,
-            'assessment_period_id' => $period->id,
-            'assessor_name' => $data['name'],
-            'assessor_email' => $data['email'],
-            'relationship' => $relationship,
-            'access_token' => Str::random($this->tokenLength()),
-        ]);
+            $this->ensureWithinQuota($user, $period, $relationship);
+            $this->ensureNotInvited($user, $period, $data);
 
+            return AssessmentRequest::create([
+                'user_id' => $user->id,
+                'assessment_period_id' => $period->id,
+                'assessor_name' => $data['name'],
+                'assessor_email' => $data['email'],
+                'relationship' => $relationship,
+                'access_token' => Str::random($this->tokenLength()),
+            ]);
+        });
+
+        // Email dikirim setelah transaksi: SMTP lambat tidak menahan kunci baris.
         return [
             'request' => $invitation,
             'email_sent' => $this->sendInvitation($invitation),

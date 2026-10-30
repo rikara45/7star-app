@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\AssessmentResultService;
 use App\Services\AssessmentScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -42,6 +43,20 @@ class AssessmentResultTest extends TestCase
         $data = app(AssessmentResultService::class)->viewDataFor($user, $baru);
 
         $this->assertEquals(['Profesionalisme' => 3.0], $data['dimensionDetails']);
+    }
+
+    public function test_data_hasil_tidak_mengambil_portofolio(): void
+    {
+        [$user, $period] = $this->dosenWithAnalysis();
+
+        DB::enableQueryLog();
+        app(AssessmentResultService::class)->viewDataFor($user, $period);
+        $queries = collect(DB::getQueryLog())->pluck('query');
+
+        $this->assertFalse(
+            $queries->contains(fn (string $query) => str_contains($query, 'portfolios')),
+            'Halaman hasil hanya butuh rincian dimensi, bukan skor portofolio.'
+        );
     }
 
     public function test_data_hasil_null_bila_belum_ada_analisis(): void
@@ -218,6 +233,17 @@ class AssessmentResultTest extends TestCase
             ->get(route('result.pdf'))
             ->assertRedirect(route('dashboard.index'))
             ->assertSessionHas('error', 'Belum ada hasil untuk dicetak.');
+    }
+
+    public function test_pdf_tetap_tercetak_saat_pengaturan_kampus_kosong(): void
+    {
+        [$user] = $this->dosenWithAnalysis();
+        UniversitySetting::query()->delete();
+
+        $response = $this->actingAs($user)->get(route('result.pdf'));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
     }
 
     private function dosenWithAnalysis(bool $analysis = true): array

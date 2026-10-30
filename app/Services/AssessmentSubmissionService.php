@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AssessmentCompletedException;
 use App\Models\AssessmentRequest;
 use App\Models\AssessmentResponse;
 use App\Models\MasterQuestion;
@@ -24,7 +25,7 @@ class AssessmentSubmissionService
                 ->firstOrFail();
 
             if ($locked->is_completed) {
-                abort(403, 'Penilaian ini sudah diselesaikan sebelumnya.');
+                throw new AssessmentCompletedException('Penilaian ini sudah diselesaikan sebelumnya.');
             }
 
             foreach ($answers as $questionId => $score) {

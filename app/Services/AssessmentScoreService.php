@@ -35,7 +35,14 @@ class AssessmentScoreService
      */
     public function dimensionScores(int $userId, AssessmentPeriod $period): array
     {
+        // Data lama bisa punya lebih dari satu baris untuk pertanyaan yang sama.
+        // Ambil baris terbaru per pertanyaan agar satu jawaban tidak berbobot ganda.
+        $latestResponseIds = DB::table('assessment_responses')
+            ->selectRaw('MAX(id) as id')
+            ->groupBy('assessment_request_id', 'master_question_id');
+
         $rawScores = DB::table('assessment_responses')
+            ->joinSub($latestResponseIds, 'latest_responses', 'assessment_responses.id', '=', 'latest_responses.id')
             ->join('assessment_requests', 'assessment_responses.assessment_request_id', '=', 'assessment_requests.id')
             ->join('master_questions', 'assessment_responses.master_question_id', '=', 'master_questions.id')
             ->where('assessment_requests.user_id', $userId)
