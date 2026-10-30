@@ -140,7 +140,7 @@
                 <p class="text-sm text-gray-500">
                     Apakah Anda yakin ingin mengirim penilaian ini? 
                     <br>
-                    <span class="text-red-500 font-semibold">Data tidak dapat diubah setelah dikirim.</span>
+                    <span class="text-red-500 font-semibold">Data tidak dapat diubah setelah seluruh pertanyaan terjawab.</span>
                 </p>
             </div>
 
