@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SubmitAssessmentRequest;
 use App\Models\AssessmentRequest;
-use App\Models\AssessmentResponse;
 use App\Models\MasterQuestion;
-use Illuminate\Support\Facades\DB;
+use App\Services\AssessmentSubmissionService;
 
 class AssessmentController extends Controller
 {
+    public function __construct(private AssessmentSubmissionService $submissions) {}
+
     // 1. Menampilkan Form Penilaian berdasarkan Token
     public function show($token)
     {
@@ -29,7 +30,10 @@ class AssessmentController extends Controller
         // Kelompokkan pertanyaan berdasarkan dimensinya (agar rapi di tampilan)
         $groupedQuestions = $questions->groupBy('dimension');
 
-        return view('assessment.form', compact('assessmentRequest', 'groupedQuestions', 'token'));
+        // Jawaban yang sudah tersimpan, dipakai untuk menandai pilihan saat dilanjutkan
+        $savedAnswers = $assessmentRequest->responses()->pluck('score', 'master_question_id');
+
+        return view('assessment.form', compact('assessmentRequest', 'groupedQuestions', 'token', 'savedAnswers'));
     }
 
     // 2. Menyimpan Jawaban ke Database
@@ -37,30 +41,20 @@ class AssessmentController extends Controller
     {
         $assessmentRequest = AssessmentRequest::where('access_token', $token)->firstOrFail();
 
-        if ($assessmentRequest->is_completed) {
-            abort(403, 'Penilaian ini sudah diselesaikan sebelumnya.');
+        $result = $this->submissions->submit($assessmentRequest, $request->validated('answers'));
+
+        if ($result['completed']) {
+            return redirect()->route('assessment.thankyou');
         }
 
-        $data = $request->validated();
-
-        DB::transaction(function () use ($assessmentRequest, $data) {
-            // Simpan setiap jawaban
-            foreach ($data['answers'] as $questionId => $score) {
-                AssessmentResponse::create([
-                    'assessment_request_id' => $assessmentRequest->id,
-                    'master_question_id' => $questionId,
-                    'score' => $score,
-                ]);
-            }
-
-            // Tandai request ini sudah selesai
-            $assessmentRequest->update([
-                'is_completed' => true,
-                'completed_at' => now(),
-            ]);
-        });
-
-        return redirect()->route('assessment.thankyou');
+        return redirect()
+            ->route('assessment.show', $token)
+            ->with('status', sprintf(
+                'Jawaban tersimpan (%d dari %d). Masih ada %d pertanyaan.',
+                $result['answered'],
+                $result['total'],
+                $result['remaining']
+            ));
     }
 
     public function thankyou()

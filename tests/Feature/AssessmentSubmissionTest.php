@@ -64,6 +64,68 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertDatabaseCount('assessment_responses', 0);
     }
 
+    public function test_kiriman_parsial_tersimpan_tanpa_menandai_selesai(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(3);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 5, $questions[1]->id => 3],
+        ])->assertRedirect(route('assessment.show', $request->access_token))
+            ->assertSessionHas('status', 'Jawaban tersimpan (2 dari 3). Masih ada 1 pertanyaan.');
+
+        $fresh = $request->fresh();
+
+        $this->assertFalse($fresh->is_completed);
+        $this->assertNull($fresh->completed_at);
+        $this->assertSame(2, $fresh->responses()->count());
+    }
+
+    public function test_melanjutkan_kiriman_parsial_tidak_menggandakan_jawaban(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(3);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 5],
+        ]);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [
+                $questions[0]->id => 2, // diperbaiki
+                $questions[1]->id => 4,
+                $questions[2]->id => 4,
+            ],
+        ])->assertRedirect(route('assessment.thankyou'));
+
+        $fresh = $request->fresh();
+
+        $this->assertTrue($fresh->is_completed);
+        $this->assertNotNull($fresh->completed_at);
+        $this->assertSame(3, $fresh->responses()->count());
+        $this->assertDatabaseHas('assessment_responses', [
+            'assessment_request_id' => $request->id,
+            'master_question_id' => $questions[0]->id,
+            'score' => 2,
+        ]);
+    }
+
+    public function test_kirim_ulang_setelah_selesai_ditolak_403(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(1);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 4],
+        ]);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 1],
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('assessment_responses', [
+            'assessment_request_id' => $request->id,
+            'score' => 4,
+        ]);
+    }
+
     private function tokenWithQuestions(int $count): array
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
