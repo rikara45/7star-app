@@ -6,11 +6,8 @@ use App\Mail\AssessmentInvitation;
 use App\Models\AiAnalysis;
 use App\Models\AssessmentPeriod;
 use App\Models\AssessmentRequest;
-use App\Models\UniversitySetting;
-use App\Services\AiNarrativeService;
 use App\Services\AssessmentScoreService;
 use App\Support\PortfolioCategories;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -19,10 +16,7 @@ use Illuminate\Support\Str;
 
 class UserDashboardController extends Controller
 {
-    public function __construct(
-        private AssessmentScoreService $scoreService,
-        private AiNarrativeService $narrativeService
-    ) {}
+    public function __construct(private AssessmentScoreService $scoreService) {}
 
     // =========================================================================
     // HALAMAN DASHBOARD UTAMA
@@ -177,137 +171,5 @@ class UserDashboardController extends Controller
         $request->delete();
 
         return back()->with('success', 'Undangan berhasil dibatalkan.');
-    }
-
-    // =========================================================================
-    // PROSES HASIL & AI (GEMINI 2.0 FLASH + TIMEOUT 20S)
-    // =========================================================================
-    public function generateResult()
-    {
-        $user = Auth::user();
-        $period = AssessmentPeriod::where('is_active', true)->first();
-
-        if (! $period) {
-            return back()->with('error', 'Tidak ada periode aktif.');
-        }
-
-        // 1. Ambil Data Realtime
-        $data = $this->scoreService->calculate($user, $period);
-
-        // 2. Cek Perubahan (Server Side Check)
-        $lastAnalysis = AiAnalysis::where('user_id', $user->id)
-            ->where('assessment_period_id', $period->id)
-            ->latest()
-            ->first();
-
-        if ($lastAnalysis &&
-            abs($lastAnalysis->score_behavior - $data['behaviorScore100']) < 0.01 &&
-            abs($lastAnalysis->score_portfolio - $data['portfolioScore']) < 0.01 &&
-            ! empty($lastAnalysis->ai_narrative)) {
-
-            return redirect()->route('result.show');
-        }
-
-        // 3. Siapkan Prompt Portofolio
-        $allCategories = PortfolioCategories::all();
-        $portfolioStringLines = [];
-
-        foreach ($allCategories as $catName => $catHint) {
-            $p = $data['portfolios']->firstWhere('category', $catName);
-            if ($p) {
-                $status = $p->status == 'verified' ? 'Terverifikasi' : 'Menunggu Verifikasi';
-                $portfolioStringLines[] = "- {$catName}: SUDAH ADA ({$status}, Poin: {$p->score})";
-            } else {
-                $portfolioStringLines[] = "- {$catName}: BELUM DIKUMPULKAN (Poin: 0)";
-            }
-        }
-        $portfolioDetailString = implode("\n", $portfolioStringLines);
-
-        // --- INTEGRASI AI (GEMINI 2.5 FLASH) ---
-
-        $prompt = "Bertindaklah sebagai Konsultan SDM Universitas profesional. 
-        DATA PROFIL:
-        Nama: {$user->name}
-        Total Skor Akhir: {$data['finalScore']} (Level {$data['stars']})
-        
-        RINCIAN SKOR 360 (PERILAKU):
-        {$data['dimensionString']}
-
-        RINCIAN PORTOFOLIO (BUKTI FISIK):
-        {$portfolioDetailString}
-
-        TUGAS:
-        Berikan analisis naratif dalam Bahasa Indonesia yang mencakup:
-        1. **Analisis Kekuatan**: Apa keunggulan utama dari perilaku dan portofolio yang sudah ada?
-        2. **Celah Kinerja (Gap)**: Soroti portofolio apa yang BELUM dikumpulkan atau nilai 360 yang rendah.
-        3. **Rekomendasi**: 3 langkah konkret untuk melengkapi kekurangan tersebut.";
-
-        $aiNarrative = $this->narrativeService->generate($prompt);
-
-        // 5. Simpan Hasil
-        AiAnalysis::updateOrCreate(
-            ['user_id' => $user->id, 'assessment_period_id' => $period->id],
-            [
-                'score_behavior' => $data['behaviorScore100'],
-                'score_portfolio' => $data['portfolioScore'],
-                'final_score' => $data['finalScore'],
-                'star_rating' => $data['stars'],
-                'ai_narrative' => $aiNarrative,
-            ]
-        );
-
-        return redirect()->route('result.show');
-    }
-
-    public function showResult()
-    {
-        $user = Auth::user();
-        $period = AssessmentPeriod::where('is_active', true)->first(); // Pastikan ada period
-
-        if (! $period) {
-            return redirect()->route('dashboard.index')->with('error', 'Tidak ada periode penilaian aktif.');
-        }
-
-        // Ambil hasil simpanan DB
-        $analysis = AiAnalysis::where('user_id', $user->id)->latest()->first();
-
-        if (! $analysis) {
-            return redirect()->route('dashboard.index')->with('error', 'Belum ada hasil. Silakan proses dulu.');
-        }
-
-        // Hitung ulang rincian detail agar bisa ditampilkan di view
-        // (Kita hitung on-the-fly agar tidak perlu ubah struktur tabel database)
-        $realtimeData = $this->scoreService->calculate($user, $period);
-        $dimensionDetails = $realtimeData['dimensionDetails'];
-
-        return view('result_7stars', compact('analysis', 'dimensionDetails'));
-    }
-
-    public function exportPdf()
-    {
-        $user = Auth::user();
-
-        // Ambil Hasil Analisis
-        $analysis = AiAnalysis::where('user_id', $user->id)->latest()->first();
-        if (! $analysis) {
-            return back()->with('error', 'Belum ada hasil untuk dicetak.');
-        }
-
-        // Ambil Setting Kampus (Untuk Kop Surat)
-        $setting = UniversitySetting::first();
-
-        // Siapkan Data View (Mirip showResult tapi untuk PDF)
-        $period = AssessmentPeriod::where('is_active', true)->first();
-        if (! $period) {
-            return back()->with('error', 'Tidak ada periode penilaian aktif.');
-        }
-        $realtimeData = $this->scoreService->calculate($user, $period);
-        $dimensionDetails = $realtimeData['dimensionDetails'];
-
-        // Load View khusus PDF
-        $pdf = Pdf::loadView('pdf.report', compact('user', 'analysis', 'setting', 'dimensionDetails'));
-
-        // Download
-        return $pdf->download('Laporan_Kepemimpinan_'.$user->name.'.pdf');
     }
 }
