@@ -78,6 +78,11 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertDatabaseCount('assessment_responses', 0);
     }
 
+    public function test_token_tidak_dikenal_tetap_404_walau_payload_tidak_valid(): void
+    {
+        $this->post('/nilai/token-palsu', ['answers' => []])->assertNotFound();
+    }
+
     public function test_kiriman_parsial_tersimpan_tanpa_menandai_selesai(): void
     {
         [$request, $questions] = $this->tokenWithQuestions(3);
@@ -146,7 +151,7 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertNull($fresh->completed_at);
     }
 
-    public function test_kirim_ulang_setelah_selesai_ditolak_403(): void
+    public function test_kirim_ulang_setelah_selesai_ditolak_dengan_pesan(): void
     {
         [$request, $questions] = $this->tokenWithQuestions(1);
 
@@ -156,7 +161,8 @@ class AssessmentSubmissionTest extends TestCase
 
         $this->post(route('assessment.store', $request->access_token), [
             'answers' => [$questions[0]->id => 1],
-        ])->assertForbidden();
+        ])->assertRedirect(route('assessment.show', $request->access_token))
+            ->assertSessionHas('error', 'Penilaian ini sudah diselesaikan sebelumnya.');
 
         $this->assertDatabaseHas('assessment_responses', [
             'assessment_request_id' => $request->id,

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SubmitAssessmentRequest;
+use App\Exceptions\AssessmentCompletedException;
 use App\Models\AssessmentRequest;
 use App\Models\MasterQuestion;
 use App\Services\AssessmentSubmissionService;
+use App\Support\AssessmentAnswerRules;
+use Illuminate\Http\Request;
 
 class AssessmentController extends Controller
 {
@@ -37,11 +39,31 @@ class AssessmentController extends Controller
     }
 
     // 2. Menyimpan Jawaban ke Database
-    public function store(SubmitAssessmentRequest $request, $token)
+    public function store(Request $request, string $token)
     {
+        // Token diresolusikan lebih dulu: token tak dikenal harus 404, bukan
+        // balasan validasi yang membocorkan format payload.
         $assessmentRequest = AssessmentRequest::where('access_token', $token)->firstOrFail();
 
-        $result = $this->submissions->submit($assessmentRequest, $request->validated('answers'));
+        if ($assessmentRequest->is_completed) {
+            return redirect()
+                ->route('assessment.show', $token)
+                ->with('error', 'Penilaian ini sudah diselesaikan sebelumnya.');
+        }
+
+        $validated = $request->validate(
+            AssessmentAnswerRules::rules(),
+            AssessmentAnswerRules::messages()
+        );
+
+        try {
+            $result = $this->submissions->submit($assessmentRequest, $validated['answers']);
+        } catch (AssessmentCompletedException $e) {
+            // Kiriman lain menyelesaikan token ini lebih dulu.
+            return redirect()
+                ->route('assessment.show', $token)
+                ->with('error', $e->getMessage());
+        }
 
         if ($result['completed']) {
             return redirect()->route('assessment.thankyou');
