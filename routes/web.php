@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AssessmentResultController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\AdminController;
@@ -29,7 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard-penilaian', [UserDashboardController::class, 'index'])->name('dashboard.index');
     
     // Undang Penilai
-    Route::post('/undang-penilai', [UserDashboardController::class, 'invite'])->name('dashboard.invite');
+    Route::post('/undang-penilai', [InvitationController::class, 'store'])->name('dashboard.invite');
 
     // Upload Portofolio
     Route::post('/upload-portofolio', [PortfolioController::class, 'store'])->name('portfolio.store');
@@ -42,7 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/hasil-penilaian', [AssessmentResultController::class, 'show'])->name('result.show');
 
     // Route untuk batalkan undangan
-    Route::delete('/cancel-invite/{id}', [UserDashboardController::class, 'destroyRequest'])->name('invite.destroy');
+    Route::delete('/cancel-invite/{assessmentRequest}', [InvitationController::class, 'destroy'])->name('invite.destroy');
 });
 
 // 1. Route Khusus ADMIN
