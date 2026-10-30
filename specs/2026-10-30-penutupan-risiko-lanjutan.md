@@ -273,7 +273,7 @@ menyentuh `AssessmentController@store`).
 | Cascade hapus undangan | Tolak `destroy` bila `responses()->exists()` | `InvitationTest::test_tidak_bisa_membatalkan_undangan_yang_sudah_berisi_jawaban` |
 | `dashboard.index` ganda | Satu definisi di group `role:dosen` | `DashboardViewTest::test_dashboard_penilaian_hanya_untuk_dosen` |
 
-Verifikasi: `php artisan test` → 166 passed (624 assertions); `php vendor/bin/pint --test app tests`
+Verifikasi: `php artisan test` → 170 passed (796 assertions); `php vendor/bin/pint --test app tests`
 → PASS 79 files.
 
 Pemeriksaan browser (server lokal port 8090, data uji dihapus setelahnya): admin
@@ -289,14 +289,34 @@ Penyimpangan dari rencana:
 - Assertion skor portofolio di `JurusanAuthorizationTest` memakai `assertEquals(0, ...)`: kolom
   `score` punya default 0, bukan null.
 
+## Tindak lanjut review independen
+
+Review fresh-context atas seluruh branch menemukan tiga hal yang langsung dikerjakan:
+
+- **Kuota throttle GET/POST berbagi satu penghitung.** Throttle bawaan memakai kunci `domain|ip`
+  untuk tamu, jadi 20 kali membuka form menghabiskan kuota kirim jawaban, dan penilai di balik satu
+  IP kampus saling memblokir. Sekarang memakai named limiter: 60/menit per token+IP untuk membuka
+  form, 20/menit per token+IP untuk kirim jawaban, plus 120/menit per IP agar tebak-token beruntun
+  tetap tertahan. Tiga test baru terbukti merah pada konfigurasi lama.
+- **Pembatalan undangan masih check-then-act.** Cek `is_completed` dan `responses()->exists()` lalu
+  `delete()` bisa menghapus jawaban yang masuk di antara keduanya. Pembatalan sekarang memakai
+  transaksi dan `lockForUpdate` pada baris yang sama dengan jalur submit.
+- **Empat route penilaian masih hanya `auth`.** Undang penilai, unggah portofolio, proses hasil AI,
+  dan halaman hasil dipakai admin/jurusan juga; proses AI membakar kuota Gemini dan portofolio
+  non-dosen tidak mungkin dinilai (404). Keempatnya dipindah ke group `role:dosen`.
+
 Catatan operator (tidak diselesaikan di kode):
 
 - `lockForUpdate()` no-op di SQLite. Test berjalan di SQLite in-memory, jadi atomicity kuota hanya
   berlaku di MySQL/MariaDB produksi. Bukti perilaku hanya lewat review kode + test "ditolak tidak
-  menyisakan baris".
+  menyisakan baris" (test itu juga lulus tanpa transaksi, jadi bukan bukti race).
 - Unique index `(assessment_request_id, master_question_id)` pada `assessment_responses` belum
   ditambahkan: butuh dedupe data produksi lebih dulu. Skor sekarang aman karena memakai baris
   terbaru, tetapi penggandaan baris masih mungkin terjadi lewat jalur tulis lain.
+- Subquery `MAX(id)` pada `dimensionScores()` belum difilter per request pengguna dan belum ada
+  index `(assessment_request_id, master_question_id)`. Cukup untuk ukuran data sekarang, tapi
+  sebaiknya dioptimalkan bersama penambahan unique index di atas.
 - Perubahan perilaku yang disetujui: kirim ulang token selesai tidak lagi 403 melainkan redirect
   dengan pesan; undangan yang sudah berisi jawaban tidak bisa dibatalkan; admin/jurusan yang
-  membuka `/dashboard-penilaian` mendapat 403 (sebelumnya bergantung urutan definisi route).
+  membuka `/dashboard-penilaian` serta empat route penilaian lain mendapat 403 (sebelumnya
+  bergantung urutan definisi route atau lolos begitu saja).
