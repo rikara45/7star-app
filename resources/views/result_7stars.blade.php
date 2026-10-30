@@ -14,16 +14,7 @@
                     
                     <div class="my-6">
                         <h1 class="text-6xl font-extrabold text-gray-900">{{ $analysis->star_rating }}</h1>
-                        <div class="flex justify-center mt-2 space-x-1 text-yellow-400 text-4xl">
-                            @php
-                                $starCount = (int) filter_var($analysis->star_rating, FILTER_SANITIZE_NUMBER_INT);
-                            @endphp
-                            @for($i=1; $i<=7; $i++)
-                                @if($i <= $starCount) <span>★</span>
-                                @else <span class="text-gray-200">★</span>
-                                @endif
-                            @endfor
-                        </div>
+                        <x-star-rating :rating="$analysis->star_rating" />
                     </div>
 
                     <div class="inline-block bg-gray-100 rounded-full px-6 py-2 text-xl font-bold text-gray-700">
