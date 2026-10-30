@@ -168,7 +168,9 @@ php vendor/bin/pint --test app tests
 wc -l app/Http/Controllers/JurusanController.php
 ```
 
-Harapan: seluruh suite hijau (90 + 3 test baru), Pint PASS, controller < 130 baris.
+Harapan: seluruh suite hijau (90 + 5 test baru), Pint PASS. Controller tetap ~150 baris karena
+`dashboard`, `verificationIndex`, `show`, dan `storeScore` sengaja tidak diubah di irisan ini;
+pemecahan controller jurusan dijadwalkan terpisah.
 
 - [ ] **Step 5: Commit**
 
