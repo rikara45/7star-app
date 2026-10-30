@@ -4,24 +4,49 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePortfolioRequest;
 use App\Models\Portfolio;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PortfolioController extends Controller
 {
     public function store(StorePortfolioRequest $request)
     {
-        $filePath = $request->file('file')->store('portfolios', 'local');
+        $portfolio = Portfolio::firstOrNew([
+            'user_id' => $request->user()->id,
+            'category' => $request->validated('category'),
+        ]);
 
-        // Kita pakai updateOrCreate agar user bisa menimpa file lama jika upload lagi di kategori yang sama
-        Portfolio::updateOrCreate(
-            ['user_id' => $request->user()->id, 'category' => $request->validated('category')],
-            [
-                'file_path' => $filePath,
-                'description' => $request->validated('description'),
-                'status' => 'uploaded', // Status awal
-                'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
-            ]
-        );
+        try {
+            $filePath = $request->file('file')->store('portfolios', 'local');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Berkas gagal disimpan. Coba lagi atau hubungi admin.');
+        }
+
+        if ($filePath === false) {
+            return back()->with('error', 'Berkas gagal disimpan. Coba lagi atau hubungi admin.');
+        }
+
+        try {
+            DB::transaction(function () use ($portfolio, $request, $filePath) {
+                $portfolio->fill([
+                    'file_path' => $filePath,
+                    'status' => 'uploaded', // Status awal
+                    'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
+                ]);
+
+                if ($request->has('description')) {
+                    $portfolio->description = $request->validated('description');
+                }
+
+                $portfolio->save();
+            });
+        } catch (\Throwable $e) {
+            Storage::disk('local')->delete($filePath);
+
+            throw $e;
+        }
 
         return back()->with('success_portfolio', 'Bukti portofolio berhasil diunggah!');
     }
