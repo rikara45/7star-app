@@ -66,7 +66,7 @@ class JurusanController extends Controller
     // 3. HALAMAN DETAIL (Form Penilaian)
     public function show($userId)
     {
-        $dosen = User::findOrFail($userId);
+        $dosen = $this->dosenOrFail($userId);
         $portfolios = Portfolio::where('user_id', $userId)->get()->keyBy('category');
         $categories = PortfolioCategories::all();
 
@@ -80,7 +80,10 @@ class JurusanController extends Controller
             'score' => 'required|numeric|min:0|max:10',
         ]);
 
-        $portfolio = Portfolio::findOrFail($portfolioId);
+        // Portofolio hanya milik dosen; id mentah tidak boleh menembus role lain.
+        $portfolio = Portfolio::whereKey($portfolioId)
+            ->whereHas('user', fn ($query) => $query->where('role', 'dosen'))
+            ->firstOrFail();
 
         $portfolio->update([
             'score' => $request->score,
@@ -102,7 +105,7 @@ class JurusanController extends Controller
 
     public function viewResult($userId)
     {
-        $dosen = User::findOrFail($userId);
+        $dosen = $this->dosenOrFail($userId);
         $period = AssessmentPeriod::where('is_active', true)->first();
 
         if (! $period) {
@@ -124,7 +127,7 @@ class JurusanController extends Controller
 
     public function exportPdf($userId)
     {
-        $dosen = User::findOrFail($userId);
+        $dosen = $this->dosenOrFail($userId);
         $period = AssessmentPeriod::where('is_active', true)->first();
 
         if (! $period) {
@@ -146,5 +149,13 @@ class JurusanController extends Controller
         ]);
 
         return $pdf->download('Laporan_'.$dosen->name.'.pdf');
+    }
+
+    /**
+     * Semua halaman jurusan hanya untuk data dosen yang dinilai.
+     */
+    private function dosenOrFail($userId): User
+    {
+        return User::where('role', 'dosen')->findOrFail($userId);
     }
 }
