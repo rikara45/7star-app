@@ -9,6 +9,6 @@ class AssessmentRequestPolicy
 {
     public function delete(User $user, AssessmentRequest $assessmentRequest): bool
     {
-        return $assessmentRequest->user_id === $user->id;
+        return (int) $assessmentRequest->user_id === (int) $user->id;
     }
 }

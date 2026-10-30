@@ -36,7 +36,7 @@ class InvitationService
             'assessor_name' => $data['name'],
             'assessor_email' => $data['email'],
             'relationship' => $relationship,
-            'access_token' => Str::random((int) config('assessment.invitation.token_length')),
+            'access_token' => Str::random($this->tokenLength()),
         ]);
 
         return [
@@ -49,11 +49,11 @@ class InvitationService
     {
         $quota = match ($relationship) {
             'superior' => [
-                'max' => (int) config('assessment.invitation.max_superior'),
+                'max' => $this->quotaMax('max_superior', 2),
                 'label' => 'Atasan',
             ],
             'peer' => [
-                'max' => (int) config('assessment.invitation.max_peer'),
+                'max' => $this->quotaMax('max_peer', 5),
                 'label' => 'Teman Sejawat',
             ],
             default => null, // self tidak dibatasi, sama seperti sebelumnya
@@ -103,5 +103,20 @@ class InvitationService
 
             return false;
         }
+    }
+
+    /**
+     * Config cache yang belum diperbarui setelah deploy bisa tidak punya key ini.
+     * Tanpa batas bawah, panjang 0 menghasilkan token kosong dan undangan kedua
+     * gagal karena unique index access_token.
+     */
+    private function tokenLength(): int
+    {
+        return max(16, (int) config('assessment.invitation.token_length', 32));
+    }
+
+    private function quotaMax(string $key, int $default): int
+    {
+        return max(1, (int) config('assessment.invitation.'.$key, $default));
     }
 }

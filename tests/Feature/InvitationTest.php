@@ -98,22 +98,6 @@ class InvitationTest extends TestCase
         Mail::assertSent(AssessmentInvitation::class, fn ($mail) => $mail->hasTo('baru@example.test'));
     }
 
-    public function test_self_assessment_tidak_dibatasi(): void
-    {
-        Mail::fake();
-        $dosen = $this->dosen();
-
-        $this->actingAs($dosen)
-            ->post(route('dashboard.invite'), [
-                'name' => $dosen->name,
-                'email' => $dosen->email,
-                'relationship' => 'self',
-            ])
-            ->assertSessionHas('success');
-
-        $this->assertSame(1, $this->invitationCount($dosen, 'self'));
-    }
-
     public function test_hubungan_tidak_dikenal_ditolak(): void
     {
         Mail::fake();
@@ -129,7 +113,8 @@ class InvitationTest extends TestCase
 
     public function test_kegagalan_email_tidak_menggagalkan_undangan(): void
     {
-        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('smtp mati'));
+        // Kegagalan SMTP nyata terjadi saat send(), bukan saat to().
+        Mail::shouldReceive('to->send')->once()->andThrow(new \RuntimeException('smtp mati'));
         Log::spy();
         $dosen = $this->dosen();
 
@@ -140,7 +125,132 @@ class InvitationTest extends TestCase
             ->assertSessionHas('success', 'Undangan dibuat, tapi Email gagal terkirim. Silakan bagikan Link Manual.');
 
         $this->assertSame(1, AssessmentRequest::count());
-        Log::shouldHaveReceived('error')->once();
+        Log::shouldHaveReceived('error')
+            ->withArgs(fn (string $message) => str_contains($message, 'Gagal kirim email undangan: smtp mati'))
+            ->once();
+    }
+
+    public function test_self_assessment_tidak_punya_kuota(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+
+        // Email tetap tidak boleh ganda; yang diuji di sini hanya tidak adanya kuota.
+        for ($i = 1; $i <= 3; $i++) {
+            $this->actingAs($dosen)
+                ->post(route('dashboard.invite'), [
+                    'name' => $dosen->name,
+                    'email' => 'self'.$i.'@example.test',
+                    'relationship' => 'self',
+                ])
+                ->assertSessionHas('success');
+        }
+
+        $this->assertSame(3, $this->invitationCount($dosen, 'self'));
+    }
+
+    public function test_kuota_hanya_menghitung_periode_aktif(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        $lama = AssessmentPeriod::forceCreate(['name' => 'Periode Lalu', 'is_active' => false]);
+
+        for ($i = 1; $i <= 2; $i++) {
+            AssessmentRequest::forceCreate([
+                'user_id' => $dosen->id,
+                'assessment_period_id' => $lama->id,
+                'assessor_name' => 'Atasan Lama '.$i,
+                'assessor_email' => 'lama'.$i.'@example.test',
+                'relationship' => 'superior',
+                'access_token' => Str::random(32),
+                'is_completed' => false,
+            ]);
+        }
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('superior', 'baru@example.test'))
+            ->assertSessionHas('success');
+
+        $activePeriod = AssessmentPeriod::where('is_active', true)->firstOrFail();
+
+        $this->assertSame(1, AssessmentRequest::where('user_id', $dosen->id)
+            ->where('assessment_period_id', $activePeriod->id)
+            ->where('relationship', 'superior')
+            ->count());
+    }
+
+    public function test_email_sama_boleh_diundang_dengan_hubungan_berbeda(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        $this->existingInvitations($dosen, 'superior', 1, 'sama@example.test');
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('peer', 'sama@example.test'))
+            ->assertSessionHas('success');
+
+        $this->assertSame(1, $this->invitationCount($dosen, 'peer'));
+    }
+
+    public function test_nama_dan_email_terlalu_panjang_ditolak(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), [
+                'name' => str_repeat('a', 256),
+                'email' => str_repeat('a', 250).'@example.test',
+                'relationship' => 'peer',
+            ])
+            ->assertSessionHasErrors(['name', 'email']);
+
+        $this->assertSame(0, AssessmentRequest::count());
+    }
+
+    public function test_konfigurasi_hilang_tetap_memakai_nilai_aman(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        config(['assessment.invitation' => []]);
+
+        // Kuota kembali ke default 2 (bukan 0, yang memblokir semua undangan).
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('superior', 'aman@example.test'))
+            ->assertSessionHas('success');
+
+        $invitation = AssessmentRequest::firstOrFail();
+        $this->assertSame(32, strlen($invitation->access_token), 'Token tidak boleh kosong saat config hilang.');
+
+        $this->existingInvitations($dosen, 'superior', 1);
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('superior', 'ketiga@example.test'))
+            ->assertSessionHas('error', 'Batas Tercapai: Anda hanya boleh mengundang maksimal 2 Atasan.');
+    }
+
+    public function test_token_length_nol_tidak_menghasilkan_token_kosong(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        config(['assessment.invitation.token_length' => 0]);
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('peer', 'nol@example.test'))
+            ->assertSessionHas('success');
+
+        $this->assertGreaterThanOrEqual(16, strlen(AssessmentRequest::firstOrFail()->access_token));
+    }
+
+    public function test_undangan_tanpa_periode_aktif_404(): void
+    {
+        Mail::fake();
+        $dosen = User::factory()->create(['role' => 'dosen']);
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('peer', 'x@example.test'))
+            ->assertNotFound();
+
+        $this->assertSame(0, AssessmentRequest::count());
     }
 
     public function test_penilai_bisa_membatalkan_undangannya_sendiri(): void

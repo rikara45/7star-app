@@ -83,8 +83,8 @@
                                 <div>
                                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Hubungan</label>
                                     <select name="relationship" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                                        <option value="superior" {{ $countSuperior >= 2 ? 'disabled' : '' }}>Atasan ({{ $countSuperior }}/2) {{ $countSuperior >= 2 ? '- Penuh' : '' }}</option>
-                                        <option value="peer" {{ $countPeer >= 5 ? 'disabled' : '' }}>Sejawat ({{ $countPeer }}/5) {{ $countPeer >= 5 ? '- Penuh' : '' }}</option>
+                                        <option value="superior" {{ $countSuperior >= $maxSuperior ? 'disabled' : '' }}>Atasan ({{ $countSuperior }}/{{ $maxSuperior }}) {{ $countSuperior >= $maxSuperior ? '- Penuh' : '' }}</option>
+                                        <option value="peer" {{ $countPeer >= $maxPeer ? 'disabled' : '' }}>Sejawat ({{ $countPeer }}/{{ $maxPeer }}) {{ $countPeer >= $maxPeer ? '- Penuh' : '' }}</option>
                                     </select>
                                 </div>
                                 <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-lg shadow transition transform hover:-translate-y-0.5">Generate Undangan</button>

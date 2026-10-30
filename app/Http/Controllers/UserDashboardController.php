@@ -34,6 +34,8 @@ class UserDashboardController extends Controller
         // Hitung Undangan (Total & Completed)
         $countSuperior = $requests->where('relationship', 'superior')->count();
         $countPeer = $requests->where('relationship', 'peer')->count();
+        $maxSuperior = max(1, (int) config('assessment.invitation.max_superior', 2));
+        $maxPeer = max(1, (int) config('assessment.invitation.max_peer', 5));
 
         $completedSuperior = $requests->where('relationship', 'superior')->where('is_completed', true)->count();
         $completedPeer = $requests->where('relationship', 'peer')->where('is_completed', true)->count();
@@ -82,6 +84,7 @@ class UserDashboardController extends Controller
             'myPortfolios', 'categories', 'currentPortfolioScore',
             'pendingCount', 'missingCount',
             'countSuperior', 'countPeer',
+            'maxSuperior', 'maxPeer',
             'isSelfDone', 'hasDataChanged',
             'latestAnalysis', // <--- Sekarang ini sudah cocok dengan variabel di atas
             'isMinRequirementsMet', 'completedSuperior', 'completedPeer', 'uploadedPortfolioCount'
