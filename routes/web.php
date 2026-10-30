@@ -103,26 +103,4 @@ Route::post('/nilai/{token}', [AssessmentController::class, 'store'])->name('ass
 Route::get('/penilaian-sukses', [AssessmentController::class, 'thankyou'])->name('assessment.thankyou');
 Route::get('/penilaian-selesai', [AssessmentController::class, 'completed'])->name('assessment.completed');
 
-// --- ROUTE TESTER (HANYA UNTUK MEMBUAT LINK UJI COBA) ---
-// Hapus route ini nanti saat production
-Route::get('/buat-link-test', function () {
-    // Buat user dummy jika belum ada
-    $user = \App\Models\User::firstOrCreate(
-        ['email' => 'dosen@univ.ac.id'],
-        ['name' => 'Dr. Budi Santoso', 'password' => bcrypt('password')]
-    );
-
-    // Buat request dummy
-    $req = \App\Models\AssessmentRequest::create([
-        'user_id' => $user->id,
-        'assessment_period_id' => 1, // Pastikan seeder periode sudah jalan
-        'assessor_name' => 'Prof. Atasan',
-        'assessor_email' => 'atasan@univ.ac.id',
-        'relationship' => 'superior',
-        'access_token' => \Illuminate\Support\Str::random(32), // Generate Token
-    ]);
-
-    return "Link Test Anda: <a href='/nilai/{$req->access_token}'>Klik di sini untuk Menilai</a>";
-});
-
 require __DIR__.'/auth.php';
