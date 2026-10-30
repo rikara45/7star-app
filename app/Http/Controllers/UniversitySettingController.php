@@ -10,18 +10,18 @@ class UniversitySettingController extends Controller
 {
     public function edit()
     {
-        $setting = UniversitySetting::firstOrCreate([]);
+        $this->authorize('manage', UniversitySetting::class);
 
-        $this->authorize('update', $setting);
+        $setting = UniversitySetting::firstOrCreate([], ['uni_name' => 'Universitas Teknologi Indonesia']);
 
         return view('admin.settings.edit', compact('setting'));
     }
 
     public function update(UpdateUniversitySettingRequest $request)
     {
-        $setting = UniversitySetting::firstOrCreate([]);
+        $this->authorize('manage', UniversitySetting::class);
 
-        $this->authorize('update', $setting);
+        $setting = UniversitySetting::firstOrCreate([], ['uni_name' => 'Universitas Teknologi Indonesia']);
 
         $data = [
             'uni_name' => $request->validated('uni_name'),

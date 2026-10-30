@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\UniversitySettingController;
 use App\Models\UniversitySetting;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
@@ -145,6 +147,55 @@ class UniversitySettingTest extends TestCase
 
         $this->assertTrue(Gate::forUser($admin)->allows('update', $setting));
         $this->assertTrue(Gate::forUser($dosen)->denies('update', $setting));
+        $this->assertTrue(Gate::forUser($admin)->allows('manage', UniversitySetting::class));
+        $this->assertTrue(Gate::forUser($dosen)->denies('manage', UniversitySetting::class));
+    }
+
+    public function test_logo_lebih_dari_dua_mb_ditolak(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->put(route('admin.settings.update'), [
+                'uni_name' => 'Universitas Uji',
+                'uni_logo' => UploadedFile::fake()->image('besar.png', 300, 300)->size(3000),
+            ])
+            ->assertSessionHasErrors('uni_logo');
+
+        $this->assertNull(UniversitySetting::firstOrFail()->uni_logo_path);
+    }
+
+    public function test_pengaturan_dibuat_saat_baris_tunggal_hilang(): void
+    {
+        UniversitySetting::query()->delete();
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.settings.edit'))
+            ->assertOk()
+            ->assertSee('Universitas Teknologi Indonesia');
+
+        $this->assertSame(1, UniversitySetting::count());
+    }
+
+    public function test_policy_menolak_pemanggilan_controller_pengaturan_tanpa_middleware(): void
+    {
+        UniversitySetting::query()->delete();
+
+        $dosen = User::factory()->create(['role' => 'dosen']);
+
+        $this->actingAs($dosen);
+
+        // Policy harus menolak sebelum firstOrCreate menulis baris apa pun.
+        try {
+            app(UniversitySettingController::class)->edit();
+            $this->fail('Non-admin seharusnya ditolak policy.');
+        } catch (AuthorizationException) {
+            $this->assertSame(0, UniversitySetting::count(), 'Tidak boleh ada baris dibuat sebelum authorize.');
+        }
     }
 
     private function admin(): User

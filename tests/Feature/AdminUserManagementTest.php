@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\AdminController;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -232,6 +235,52 @@ class AdminUserManagementTest extends TestCase
 
         $this->assertTrue(Gate::forUser($admin)->allows('manage', User::class));
         $this->assertTrue(Gate::forUser($dosen)->denies('manage', User::class));
+    }
+
+    public function test_email_milik_orang_lain_ditolak_saat_update(): void
+    {
+        $admin = $this->admin();
+        $user = User::factory()->create(['role' => 'dosen', 'email' => 'milik.sendiri@example.test']);
+        $lain = User::factory()->create(['role' => 'dosen', 'email' => 'milik.orang.lain@example.test']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $user), [
+                'name' => $user->name,
+                'email' => $lain->email,
+                'role' => 'dosen',
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame('milik.sendiri@example.test', $user->fresh()->email);
+    }
+
+    public function test_password_kurang_dari_enam_ditolak_saat_update(): void
+    {
+        $admin = $this->admin();
+        $user = User::factory()->create(['role' => 'dosen', 'password' => Hash::make('password')]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $user), [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => 'dosen',
+                'password' => '12345',
+            ])
+            ->assertSessionHasErrors('password');
+
+        $this->assertTrue(Hash::check('password', $user->fresh()->password), 'Password lama tidak boleh berubah.');
+    }
+
+    public function test_policy_menolak_pemanggilan_controller_tanpa_middleware(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+
+        $this->actingAs($dosen);
+
+        // Route asli dijaga middleware role:admin; ini membuktikan lapisan authorize
+        // di controller tetap menolak bila middleware dilepas.
+        $this->expectException(AuthorizationException::class);
+        app(AdminController::class)->usersIndex(Request::create('/admin/users', 'GET'));
     }
 
     private function admin(): User
