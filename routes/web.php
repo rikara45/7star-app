@@ -100,8 +100,12 @@ Route::middleware(['auth', 'role:dosen'])->group(function () {
 // Untuk simpelnya, user bisa akses /dashboard-penilaian
 
 // Route untuk Penilaian 360 (Akses via Token, tanpa Login)
-Route::get('/nilai/{token}', [AssessmentController::class, 'show'])->name('assessment.show');
-Route::post('/nilai/{token}', [AssessmentController::class, 'store'])->name('assessment.store');
+Route::get('/nilai/{token}', [AssessmentController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('assessment.show');
+Route::post('/nilai/{token}', [AssessmentController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('assessment.store');
 
 // Halaman Status
 Route::get('/penilaian-sukses', [AssessmentController::class, 'thankyou'])->name('assessment.thankyou');
