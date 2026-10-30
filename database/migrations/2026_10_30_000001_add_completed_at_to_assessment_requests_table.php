@@ -19,7 +19,7 @@ return new class extends Migration
         DB::table('assessment_requests')
             ->where('is_completed', true)
             ->whereNull('completed_at')
-            ->update(['completed_at' => DB::raw('updated_at')]);
+            ->update(['completed_at' => DB::raw('COALESCE(updated_at, created_at, CURRENT_TIMESTAMP)')]);
     }
 
     public function down(): void
