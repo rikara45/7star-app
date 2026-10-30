@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePortfolioRequest;
 use App\Models\Portfolio;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class PortfolioController extends Controller
 {
@@ -23,37 +21,22 @@ class PortfolioController extends Controller
         'Dampak Eksternal',
     ];
 
-    public function store(Request $request)
+    public function store(StorePortfolioRequest $request)
     {
-        $request->validate([
-            'category' => 'required|string',
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048', // Max 2MB
-            'description' => 'nullable|string',
-        ]);
+        $filePath = $request->file('file')->store('portfolios', 'public');
 
-        $user = Auth::user();
+        // Kita pakai updateOrCreate agar user bisa menimpa file lama jika upload lagi di kategori yang sama
+        Portfolio::updateOrCreate(
+            ['user_id' => $request->user()->id, 'category' => $request->validated('category')],
+            [
+                'file_path' => $filePath,
+                'description' => $request->validated('description'),
+                'status' => 'uploaded', // Status awal
+                'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
+            ]
+        );
 
-        // Upload File
-        if ($request->hasFile('file')) {
-            // Simpan ke folder: storage/app/public/portfolios
-            $filePath = $request->file('file')->store('portfolios', 'public');
-
-            // Simpan ke Database
-            // Kita pakai updateOrCreate agar user bisa menimpa file lama jika upload lagi di kategori yang sama
-            Portfolio::updateOrCreate(
-                ['user_id' => $user->id, 'category' => $request->category],
-                [
-                    'file_path' => $filePath,
-                    'description' => $request->description,
-                    'status' => 'uploaded', // Status awal
-                    'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
-                ]
-            );
-
-            return back()->with('success_portfolio', 'Bukti portofolio berhasil diunggah!');
-        }
-
-        return back()->with('error', 'File gagal diunggah.');
+        return back()->with('success_portfolio', 'Bukti portofolio berhasil diunggah!');
     }
 
     // Helper untuk mengambil list kategori beserta hint-nya
