@@ -28,6 +28,42 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertNotNull($fresh->completed_at);
     }
 
+    public function test_id_pertanyaan_palsu_ditolak_422(): void
+    {
+        [$request] = $this->tokenWithQuestions(2);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [999999 => 4],
+        ])->assertSessionHasErrors('answers');
+
+        $this->assertDatabaseCount('assessment_responses', 0);
+    }
+
+    public function test_jawaban_kosong_ditolak_422(): void
+    {
+        [$request] = $this->tokenWithQuestions(2);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [],
+        ])->assertSessionHasErrors('answers');
+
+        $this->assertDatabaseCount('assessment_responses', 0);
+    }
+
+    public function test_skor_di_luar_1_sampai_5_ditolak_422(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(2);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 0, $questions[1]->id => 6],
+        ])->assertSessionHasErrors([
+            'answers.'.$questions[0]->id,
+            'answers.'.$questions[1]->id,
+        ]);
+
+        $this->assertDatabaseCount('assessment_responses', 0);
+    }
+
     private function tokenWithQuestions(int $count): array
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
