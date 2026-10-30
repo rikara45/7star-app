@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -97,8 +98,10 @@ class AdminController extends Controller
     }
 
     // 7. PROSES HAPUS
-    public function destroy(User $user) {
+    public function destroy(User $user)
+    {
         $user->delete();
+
         return back()->with('success', 'User berhasil dihapus.');
     }
 }

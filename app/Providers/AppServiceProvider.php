@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL; // <--- JANGAN LUPA IMPORT INI
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Tambahkan logika ini:
         // Jika aplikasi mendeteksi sedang diakses lewat Ngrok (atau HTTPS), paksa semua link jadi HTTPS
-        if($this->app->environment('production') || str_contains(request()->url(), 'ngrok-free.app')) {
+        if ($this->app->environment('production') || str_contains(request()->url(), 'ngrok-free.app')) {
             URL::forceScheme('https');
         }
     }

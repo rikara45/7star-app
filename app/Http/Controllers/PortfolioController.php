@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class PortfolioController extends Controller
 {
-    // Daftar Kategori sesuai Dokumen Rubrik Penilaian 
+    // Daftar Kategori sesuai Dokumen Rubrik Penilaian
     private $categories = [
         'Pendidikan & Sertifikasi',
         'Pengalaman Jabatan',
@@ -20,7 +20,7 @@ class PortfolioController extends Controller
         'Integritas & Teladan',
         'Kapasitas Digital',
         'Komunikasi Dua Arah',
-        'Dampak Eksternal'
+        'Dampak Eksternal',
     ];
 
     public function store(Request $request)
@@ -28,7 +28,7 @@ class PortfolioController extends Controller
         $request->validate([
             'category' => 'required|string',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048', // Max 2MB
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
         ]);
 
         $user = Auth::user();
@@ -46,7 +46,7 @@ class PortfolioController extends Controller
                     'file_path' => $filePath,
                     'description' => $request->description,
                     'status' => 'uploaded', // Status awal
-                    'score' => 0 // JANGAN KASIH 10 DULU. Tunggu Jurusan.
+                    'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
                 ]
             );
 
@@ -55,20 +55,21 @@ class PortfolioController extends Controller
 
         return back()->with('error', 'File gagal diunggah.');
     }
-    
+
     // Helper untuk mengambil list kategori beserta hint-nya
-    public static function getCategories() {
+    public static function getCategories()
+    {
         return [
-            'Pendidikan & Sertifikasi'  => 'Ijazah, sertifikat pelatihan, Serdos',
-            'Pengalaman Jabatan'        => 'SK jabatan, bukti memimpin proyek',
-            'Kinerja Akademik'          => 'Jurnal Scopus, buku, HKI',
-            'Riset & Kolaborasi'        => 'MoU/MoA, proposal riset, output',
-            'Inovasi Institusional'     => 'Inovasi pembelajaran, SOP digital',
-            'Empowerment & Mentoring'   => 'Bukti coaching, mentoring staf/mahasiswa',
-            'Integritas & Teladan'      => 'Rekam etik, disiplin, penghargaan',
-            'Kapasitas Digital'         => 'Bukti implementasi platform digital',
-            'Komunikasi Dua Arah'       => 'Notula, tindak lanjut masukan',
-            'Dampak Eksternal'          => 'Akreditasi, ranking, kontribusi publik'
+            'Pendidikan & Sertifikasi' => 'Ijazah, sertifikat pelatihan, Serdos',
+            'Pengalaman Jabatan' => 'SK jabatan, bukti memimpin proyek',
+            'Kinerja Akademik' => 'Jurnal Scopus, buku, HKI',
+            'Riset & Kolaborasi' => 'MoU/MoA, proposal riset, output',
+            'Inovasi Institusional' => 'Inovasi pembelajaran, SOP digital',
+            'Empowerment & Mentoring' => 'Bukti coaching, mentoring staf/mahasiswa',
+            'Integritas & Teladan' => 'Rekam etik, disiplin, penghargaan',
+            'Kapasitas Digital' => 'Bukti implementasi platform digital',
+            'Komunikasi Dua Arah' => 'Notula, tindak lanjut masukan',
+            'Dampak Eksternal' => 'Akreditasi, ranking, kontribusi publik',
         ];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ class AssessmentRequest extends Model
     {
         return $this->hasMany(AssessmentResponse::class);
     }
-    
+
     // Cek apakah sudah selesai dinilai
     public function isCompleted()
     {

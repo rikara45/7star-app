@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\UniversitySetting;
@@ -11,6 +12,7 @@ class UniversitySettingController extends Controller
     {
         // Ambil data baris pertama (karena cuma ada 1 kampus)
         $setting = UniversitySetting::first();
+
         return view('admin.settings.edit', compact('setting'));
     }
 
@@ -35,7 +37,7 @@ class UniversitySettingController extends Controller
             if ($setting->uni_logo_path && Storage::disk('public')->exists($setting->uni_logo_path)) {
                 Storage::disk('public')->delete($setting->uni_logo_path);
             }
-            
+
             // Upload baru
             $path = $request->file('uni_logo')->store('settings', 'public');
             $data['uni_logo_path'] = $path;

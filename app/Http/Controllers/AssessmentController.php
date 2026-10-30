@@ -72,9 +72,9 @@ class AssessmentController extends Controller
     {
         return view('assessment.thankyou');
     }
-    
+
     public function completed()
     {
-         return view('assessment.completed');
+        return view('assessment.completed');
     }
 }

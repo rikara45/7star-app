@@ -22,6 +22,6 @@ class AssessmentInvitation extends Mailable
     public function build()
     {
         return $this->subject('Undangan Penilaian Kepemimpinan 7 Bintang')
-                    ->view('emails.invitation'); // Kita akan buat view ini di langkah 2
+            ->view('emails.invitation'); // Kita akan buat view ini di langkah 2
     }
 }

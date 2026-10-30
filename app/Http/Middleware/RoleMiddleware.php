@@ -17,7 +17,7 @@ class RoleMiddleware
     {
         // Jika user belum login atau role-nya tidak sesuai
         $user = $request->user();
-        if (!$user || $user->role !== $role) {
+        if (! $user || $user->role !== $role) {
             abort(403, 'Akses Ditolak. Anda tidak memiliki izin ke halaman ini.');
         }
 
