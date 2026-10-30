@@ -28,8 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Dashboard Utama
-    Route::get('/dashboard-penilaian', [UserDashboardController::class, 'index'])->name('dashboard.index');
-    
+    // (route dashboard dosen ada di group role:dosen di bawah, satu definisi saja)
+
     // Undang Penilai
     Route::post('/undang-penilai', [InvitationController::class, 'store'])->name('dashboard.invite');
 

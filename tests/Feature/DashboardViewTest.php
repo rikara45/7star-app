@@ -93,6 +93,24 @@ class DashboardViewTest extends TestCase
             ->assertDontSee('Validasi Data Belum Terpenuhi');
     }
 
+    public function test_dashboard_penilaian_hanya_untuk_dosen(): void
+    {
+        foreach (['admin', 'jurusan'] as $role) {
+            $user = User::factory()->create(['role' => $role]);
+
+            $this->actingAs($user)
+                ->get(route('dashboard.index'))
+                ->assertForbidden();
+        }
+
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+
+        $this->actingAs($dosen)
+            ->get(route('dashboard.index'))
+            ->assertOk();
+    }
+
     public function test_dashboard_tanpa_periode_aktif_mengembalikan_200(): void
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
