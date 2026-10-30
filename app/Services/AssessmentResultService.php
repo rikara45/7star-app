@@ -41,7 +41,7 @@ class AssessmentResultService
 
         return [
             'analysis' => $analysis,
-            'dimensionDetails' => $this->scoreService->calculate($user, $period)['dimensionDetails'],
+            'dimensionDetails' => $this->scoreService->dimensionScores($user->id, $period),
         ];
     }
 
