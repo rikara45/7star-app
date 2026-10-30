@@ -111,6 +111,26 @@ class DashboardViewTest extends TestCase
             ->assertOk();
     }
 
+    public function test_aksi_penilaian_hanya_untuk_dosen(): void
+    {
+        $routes = [
+            ['post', 'dashboard.invite'],
+            ['post', 'portfolio.store'],
+            ['post', 'result.generate'],
+            ['get', 'result.show'],
+        ];
+
+        foreach (['admin', 'jurusan'] as $role) {
+            $user = User::factory()->create(['role' => $role]);
+
+            foreach ($routes as [$method, $name]) {
+                $this->actingAs($user)
+                    ->{$method}(route($name))
+                    ->assertForbidden();
+            }
+        }
+    }
+
     public function test_dashboard_tanpa_periode_aktif_mengembalikan_200(): void
     {
         $dosen = User::factory()->create(['role' => 'dosen']);

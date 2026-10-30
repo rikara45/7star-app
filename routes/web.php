@@ -30,18 +30,8 @@ Route::middleware('auth')->group(function () {
     // Dashboard Utama
     // (route dashboard dosen ada di group role:dosen di bawah, satu definisi saja)
 
-    // Undang Penilai
-    Route::post('/undang-penilai', [InvitationController::class, 'store'])->name('dashboard.invite');
-
-    // Upload Portofolio
-    Route::post('/upload-portofolio', [PortfolioController::class, 'store'])->name('portfolio.store');
+    // Berkas portofolio: aksesnya diatur policy (pemilik, jurusan, admin).
     Route::get('/portofolio/{portfolio}/berkas', [PortfolioController::class, 'download'])->name('portfolio.file');
-
-    // Proses Hitung & AI (tombol Proses)
-    Route::post('/proses-hasil', [AssessmentResultController::class, 'generate'])->name('result.generate');
-
-    // Halaman Hasil Akhir
-    Route::get('/hasil-penilaian', [AssessmentResultController::class, 'show'])->name('result.show');
 
     // Route untuk batalkan undangan
     Route::delete('/cancel-invite/{assessmentRequest}', [InvitationController::class, 'destroy'])->name('invite.destroy');
@@ -88,11 +78,21 @@ Route::middleware(['auth', 'role:jurusan'])->group(function () {
 
 // 3. Route Khusus DOSEN (Target)
 Route::middleware(['auth', 'role:dosen'])->group(function () {
-    // Pindahkan atau tambahkan route dashboard dosen di sini jika ingin membatasi akses hanya untuk role 'dosen'
     Route::get('/dashboard-penilaian', [UserDashboardController::class, 'index'])->name('dashboard.index');
 
+    // Undang Penilai
+    Route::post('/undang-penilai', [InvitationController::class, 'store'])->name('dashboard.invite');
+
+    // Upload Portofolio
+    Route::post('/upload-portofolio', [PortfolioController::class, 'store'])->name('portfolio.store');
+
+    // Proses Hitung & AI (tombol Proses)
+    Route::post('/proses-hasil', [AssessmentResultController::class, 'generate'])->name('result.generate');
+
+    // Halaman Hasil Akhir
+    Route::get('/hasil-penilaian', [AssessmentResultController::class, 'show'])->name('result.show');
+
     Route::get('/hasil-penilaian/pdf', [AssessmentResultController::class, 'pdf'])->name('result.pdf');
-    // Tambahkan route lain untuk dosen sesuai kebutuhan (undang penilai, upload porto, proses hasil)...
 });
 
 // PENTING: Karena Anda pakai Laravel Breeze, pastikan route '/dashboard' default 
