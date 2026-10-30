@@ -7,6 +7,7 @@ use App\Http\Requests\StoreInvitationRequest;
 use App\Models\AssessmentPeriod;
 use App\Models\AssessmentRequest;
 use App\Services\InvitationService;
+use Illuminate\Support\Facades\DB;
 
 class InvitationController extends Controller
 {
@@ -38,18 +39,26 @@ class InvitationController extends Controller
     {
         $this->authorize('delete', $assessmentRequest);
 
-        if ($assessmentRequest->is_completed) {
-            return back()->with('error', 'Tidak bisa membatalkan penilaian yang sudah selesai.');
-        }
+        // Kunci baris yang sama dengan yang dipakai jalur submit, supaya
+        // jawaban yang masuk bersamaan tidak terhapus lewat cascade.
+        return DB::transaction(function () use ($assessmentRequest) {
+            $locked = AssessmentRequest::whereKey($assessmentRequest->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Menghapus undangan ikut menghapus jawabannya lewat cascade; jawaban
-        // parsial tetap data penilai yang tidak boleh hilang diam-diam.
-        if ($assessmentRequest->responses()->exists()) {
-            return back()->with('error', 'Tidak bisa membatalkan undangan yang sudah diisi.');
-        }
+            if ($locked->is_completed) {
+                return back()->with('error', 'Tidak bisa membatalkan penilaian yang sudah selesai.');
+            }
 
-        $assessmentRequest->delete();
+            // Menghapus undangan ikut menghapus jawabannya lewat cascade; jawaban
+            // parsial tetap data penilai yang tidak boleh hilang diam-diam.
+            if ($locked->responses()->exists()) {
+                return back()->with('error', 'Tidak bisa membatalkan undangan yang sudah diisi.');
+            }
 
-        return back()->with('success', 'Undangan berhasil dibatalkan.');
+            $locked->delete();
+
+            return back()->with('success', 'Undangan berhasil dibatalkan.');
+        });
     }
 }
