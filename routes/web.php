@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\AssessmentResultController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\AdminController;
@@ -35,10 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/portofolio/{portfolio}/berkas', [PortfolioController::class, 'download'])->name('portfolio.file');
 
     // Proses Hitung & AI (tombol Proses)
-    Route::post('/proses-hasil', [UserDashboardController::class, 'generateResult'])->name('result.generate');
+    Route::post('/proses-hasil', [AssessmentResultController::class, 'generate'])->name('result.generate');
 
     // Halaman Hasil Akhir
-    Route::get('/hasil-penilaian', [UserDashboardController::class, 'showResult'])->name('result.show');
+    Route::get('/hasil-penilaian', [AssessmentResultController::class, 'show'])->name('result.show');
 
     // Route untuk batalkan undangan
     Route::delete('/cancel-invite/{id}', [UserDashboardController::class, 'destroyRequest'])->name('invite.destroy');
@@ -88,7 +89,7 @@ Route::middleware(['auth', 'role:dosen'])->group(function () {
     // Pindahkan atau tambahkan route dashboard dosen di sini jika ingin membatasi akses hanya untuk role 'dosen'
     Route::get('/dashboard-penilaian', [UserDashboardController::class, 'index'])->name('dashboard.index');
 
-    Route::get('/hasil-penilaian/pdf', [UserDashboardController::class, 'exportPdf'])->name('result.pdf');
+    Route::get('/hasil-penilaian/pdf', [AssessmentResultController::class, 'pdf'])->name('result.pdf');
     // Tambahkan route lain untuk dosen sesuai kebutuhan (undang penilai, upload porto, proses hasil)...
 });
 
