@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePortfolioRequest;
 use App\Models\Portfolio;
+use Illuminate\Support\Facades\Storage;
 
 class PortfolioController extends Controller
 {
@@ -37,6 +38,18 @@ class PortfolioController extends Controller
         );
 
         return back()->with('success_portfolio', 'Bukti portofolio berhasil diunggah!');
+    }
+
+    public function download(Portfolio $portfolio)
+    {
+        $this->authorize('download', $portfolio);
+
+        $disk = collect(['local', 'public'])
+            ->first(fn (string $disk) => Storage::disk($disk)->exists($portfolio->file_path));
+
+        abort_if($disk === null, 404);
+
+        return Storage::disk($disk)->response($portfolio->file_path);
     }
 
     // Helper untuk mengambil list kategori beserta hint-nya
