@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\AssessmentPeriod;
 use App\Models\AssessmentRequest;
+use App\Models\AssessmentResponse;
 use App\Models\MasterQuestion;
 use App\Models\User;
+use App\Services\AssessmentScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -28,7 +30,7 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertNotNull($fresh->completed_at);
     }
 
-    public function test_id_pertanyaan_palsu_ditolak_422(): void
+    public function test_id_pertanyaan_palsu_ditolak(): void
     {
         [$request] = $this->tokenWithQuestions(2);
 
@@ -39,7 +41,19 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertDatabaseCount('assessment_responses', 0);
     }
 
-    public function test_jawaban_kosong_ditolak_422(): void
+    public function test_id_pertanyaan_non_digit_ditolak_tanpa_500(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(2);
+
+        // "1.5" lolos bila key hanya di-intval() saat validasi, lalu meledak di foreign key.
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => ['1.5' => 4, $questions[1]->id => 3],
+        ])->assertSessionHasErrors('answers');
+
+        $this->assertDatabaseCount('assessment_responses', 0);
+    }
+
+    public function test_jawaban_kosong_ditolak(): void
     {
         [$request] = $this->tokenWithQuestions(2);
 
@@ -50,7 +64,7 @@ class AssessmentSubmissionTest extends TestCase
         $this->assertDatabaseCount('assessment_responses', 0);
     }
 
-    public function test_skor_di_luar_1_sampai_5_ditolak_422(): void
+    public function test_skor_di_luar_1_sampai_5_ditolak(): void
     {
         [$request, $questions] = $this->tokenWithQuestions(2);
 
@@ -108,6 +122,30 @@ class AssessmentSubmissionTest extends TestCase
         ]);
     }
 
+    public function test_baris_duplikat_tidak_mengunci_token_parsial(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(3);
+
+        // Data lama dari create() bisa punya dua baris untuk pertanyaan yang sama.
+        foreach ([5, 1] as $score) {
+            AssessmentResponse::forceCreate([
+                'assessment_request_id' => $request->id,
+                'master_question_id' => $questions[0]->id,
+                'score' => $score,
+            ]);
+        }
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[1]->id => 4],
+        ])->assertRedirect(route('assessment.show', $request->access_token))
+            ->assertSessionHas('status', 'Jawaban tersimpan (2 dari 3). Masih ada 1 pertanyaan.');
+
+        $fresh = $request->fresh();
+
+        $this->assertFalse($fresh->is_completed);
+        $this->assertNull($fresh->completed_at);
+    }
+
     public function test_kirim_ulang_setelah_selesai_ditolak_403(): void
     {
         [$request, $questions] = $this->tokenWithQuestions(1);
@@ -126,6 +164,22 @@ class AssessmentSubmissionTest extends TestCase
         ]);
     }
 
+    public function test_jawaban_parsial_tidak_masuk_skor_360(): void
+    {
+        [$request, $questions] = $this->tokenWithQuestions(2);
+
+        $this->post(route('assessment.store', $request->access_token), [
+            'answers' => [$questions[0]->id => 5],
+        ]);
+
+        $scores = app(AssessmentScoreService::class)->dimensionScores(
+            $request->user_id,
+            AssessmentPeriod::findOrFail($request->assessment_period_id)
+        );
+
+        $this->assertSame([], $scores, 'Penilaian yang belum lengkap tidak boleh menyumbang skor 360.');
+    }
+
     public function test_form_menampilkan_jawaban_tersimpan_terpilih(): void
     {
         [$request, $questions] = $this->tokenWithQuestions(2);
@@ -134,10 +188,14 @@ class AssessmentSubmissionTest extends TestCase
             'answers' => [$questions[0]->id => 5],
         ]);
 
-        $this->get(route('assessment.show', $request->access_token))
+        $response = $this->get(route('assessment.show', $request->access_token))
             ->assertOk()
-            ->assertSee('Jawaban tersimpan (1 dari 2). Masih ada 1 pertanyaan.')
-            ->assertSee('name="answers['.$questions[0]->id.']" value="5" class="peer sr-only" required checked', false);
+            ->assertSee('Jawaban tersimpan (1 dari 2). Masih ada 1 pertanyaan.');
+
+        $html = $response->getContent();
+
+        $this->assertSame(1, $this->checkedRadios($html, $questions[0]->id), 'Hanya satu pilihan per pertanyaan yang dicentang.');
+        $this->assertSame(0, $this->checkedRadios($html, $questions[1]->id), 'Pertanyaan yang belum dijawab tidak boleh tercentang.');
     }
 
     public function test_form_menampilkan_error_validasi(): void
@@ -151,6 +209,13 @@ class AssessmentSubmissionTest extends TestCase
         $this->get(route('assessment.show', $request->access_token))
             ->assertOk()
             ->assertSee('Belum ada jawaban yang dikirim.');
+    }
+
+    private function checkedRadios(string $html, int $questionId): int
+    {
+        preg_match_all('/<input[^>]*name="answers\['.$questionId.'\]"[^>]*>/', $html, $matches);
+
+        return count(array_filter($matches[0], fn (string $tag) => str_contains($tag, 'checked')));
     }
 
     private function tokenWithQuestions(int $count): array

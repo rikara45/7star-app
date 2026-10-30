@@ -40,12 +40,19 @@ class SubmitAssessmentRequest extends FormRequest
     /**
      * Tolak ID pertanyaan yang tidak ada di master_questions dengan 422,
      * bukan 500 dari pelanggaran foreign key.
+     *
+     * Key non-digit ("1.5", "+1", " 1") juga ditolak: key itu lolos bila hanya
+     * di-intval(), lalu meledak saat dipakai sebagai master_question_id.
      */
     private function knownQuestionIds(): \Closure
     {
         return function (string $attribute, mixed $value, \Closure $fail): void {
-            $known = MasterQuestion::pluck('id')->all();
-            $unknown = array_diff(array_map('intval', array_keys((array) $value)), $known);
+            $known = array_map('intval', MasterQuestion::pluck('id')->all());
+
+            $unknown = array_filter(
+                array_keys((array) $value),
+                fn ($id) => ! ctype_digit((string) $id) || ! in_array((int) $id, $known, true)
+            );
 
             if ($unknown !== []) {
                 $fail('Ada pertanyaan yang tidak dikenal dalam jawaban.');

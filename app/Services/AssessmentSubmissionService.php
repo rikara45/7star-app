@@ -17,27 +17,40 @@ class AssessmentSubmissionService
      */
     public function submit(AssessmentRequest $assessmentRequest, array $answers): array
     {
-        if ($assessmentRequest->is_completed) {
-            abort(403, 'Penilaian ini sudah diselesaikan sebelumnya.');
-        }
-
         return DB::transaction(function () use ($assessmentRequest, $answers) {
+            // Kunci baris request agar dua submit bersamaan tidak lolos gate bersama.
+            $locked = AssessmentRequest::whereKey($assessmentRequest->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->is_completed) {
+                abort(403, 'Penilaian ini sudah diselesaikan sebelumnya.');
+            }
+
             foreach ($answers as $questionId => $score) {
                 AssessmentResponse::updateOrCreate(
                     [
-                        'assessment_request_id' => $assessmentRequest->id,
-                        'master_question_id' => $questionId,
+                        'assessment_request_id' => $locked->id,
+                        'master_question_id' => (int) $questionId,
                     ],
                     ['score' => $score]
                 );
             }
 
             $total = MasterQuestion::count();
-            $answered = $assessmentRequest->responses()->count();
-            $completed = $total > 0 && $answered >= $total;
+
+            // Hitung pertanyaan berbeda yang masih ada di master_questions. Menghitung
+            // baris saja akan mengunci token parsial bila ada duplikat atau baris yatim
+            // dari data lama (create() tanpa updateOrCreate, atau seeder truncate).
+            $answered = $locked->responses()
+                ->whereIn('master_question_id', MasterQuestion::query()->select('id'))
+                ->distinct()
+                ->count('master_question_id');
+
+            $completed = $total > 0 && $answered === $total;
 
             if ($completed) {
-                $assessmentRequest->update([
+                $locked->update([
                     'is_completed' => true,
                     'completed_at' => now(),
                 ]);
