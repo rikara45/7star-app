@@ -78,20 +78,20 @@
                                 {{-- STATUS DOKUMEN (LOGIKA 3 WARNA) --}}
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     @if($dosen->total_portfolios == 0)
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                                        <x-status-badge tone="red">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             Belum Mengirim
-                                        </span>
+                                        </x-status-badge>
                                     @elseif($dosen->pending_count > 0)
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200 animate-pulse">
+                                        <x-status-badge tone="yellow" pulse>
                                             <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
                                             {{ $dosen->pending_count }} Perlu Verifikasi
-                                        </span>
+                                        </x-status-badge>
                                     @else
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">
+                                        <x-status-badge tone="green">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                             Selesai
-                                        </span>
+                                        </x-status-badge>
                                     @endif
                                 </td>
 

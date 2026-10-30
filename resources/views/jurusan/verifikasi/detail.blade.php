@@ -77,18 +77,16 @@
                                 @if($p)
                                     <div class="text-right" id="badge-container-{{ $p->id }}">
                                         @if($p->status == 'verified')
-                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold border border-green-200 flex items-center ml-auto w-max">
+                                            <x-status-badge tone="green" class="ml-auto">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                                 Verified (Skor: <span class="score-val">{{ $p->score }}</span>)
-                                            </span>
+                                            </x-status-badge>
                                         @else
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold border border-yellow-200 animate-pulse block shadow-sm">
-                                                🔔 Perlu Dinilai
-                                            </span>
+                                            <x-status-badge tone="yellow" pulse>Perlu Dinilai</x-status-badge>
                                         @endif
                                     </div>
                                 @else
-                                    <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Kosong</span>
+                                    <x-status-badge tone="gray">Kosong</x-status-badge>
                                 @endif
                             </div>
 
@@ -205,11 +203,11 @@
                 btn.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2 px-6 rounded shadow transition flex items-center";
                 btn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> <span>Perbarui Nilai</span>';
 
-                // Update Badge Status jadi Hijau
+                // Update Badge Status jadi Hijau (kelas sama dengan x-status-badge)
                 badgeContainer.innerHTML = `
-                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold border border-green-200 flex items-center ml-auto w-max">
+                    <span class="inline-flex items-center rounded-full border font-bold px-2 py-1 text-xs bg-green-200 text-green-800 border-green-200 ml-auto">
                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        Verified (Skor: ${scoreVal})
+                        Verified (Skor: <span class="score-val">${scoreVal}</span>)
                     </span>
                 `;
 
