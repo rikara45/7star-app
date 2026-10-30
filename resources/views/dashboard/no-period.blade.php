@@ -17,6 +17,12 @@
                     untuk informasi jadwal penilaian berikutnya.
                 </p>
             </div>
+
+            @if(session('error'))
+                <div class="mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r text-sm font-bold">
+                    {{ session('error') }}
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>
