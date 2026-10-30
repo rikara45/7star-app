@@ -40,9 +40,10 @@ tinggal dashboard + undangan.
 - Analisis tersimpan berasal dari periode lain (periode aktif berganti) → halaman hasil tetap
   memakai analisis terbaru tanpa error.
 
-Di luar cakupan (dicatat, bukan dikerjakan di sini): PDF tetap 500 bila tabel
-`university_settings` kosong (ditangani di irisan 6 bersama pengaturan universitas); batas jumlah
-kategori portofolio pada prompt tidak berubah.
+Di luar cakupan (dicatat, bukan dikerjakan di sini): migration `university_settings` sudah
+menyisipkan satu baris default, jadi PDF tetap tampil walau admin belum mengisi profil (kop
+kosong); penanganan tabel yang benar-benar kosong ditunda ke irisan 6 bersama pengaturan
+universitas. Batas jumlah kategori portofolio pada prompt tidak berubah.
 
 ---
 
