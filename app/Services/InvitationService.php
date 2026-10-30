@@ -108,11 +108,12 @@ class InvitationService
     /**
      * Config cache yang belum diperbarui setelah deploy bisa tidak punya key ini.
      * Tanpa batas bawah, panjang 0 menghasilkan token kosong dan undangan kedua
-     * gagal karena unique index access_token.
+     * gagal karena unique index access_token. Batas atas 64 mengikuti lebar kolom
+     * access_token; nilai lebih panjang akan dipotong MySQL strict mode (error 1406).
      */
     private function tokenLength(): int
     {
-        return max(16, (int) config('assessment.invitation.token_length', 32));
+        return min(64, max(16, (int) config('assessment.invitation.token_length', 32)));
     }
 
     private function quotaMax(string $key, int $default): int

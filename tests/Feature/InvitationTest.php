@@ -79,6 +79,7 @@ class InvitationTest extends TestCase
     public function test_undangan_tersimpan_dan_email_dikirim(): void
     {
         Mail::fake();
+        config(['assessment.invitation.token_length' => 20]);
         $dosen = $this->dosen();
 
         $this->actingAs($dosen)
@@ -93,7 +94,7 @@ class InvitationTest extends TestCase
         $this->assertSame('peer', $invitation->relationship);
         $this->assertSame('baru@example.test', $invitation->assessor_email);
         $this->assertFalse($invitation->is_completed);
-        $this->assertSame(config('assessment.invitation.token_length'), strlen($invitation->access_token));
+        $this->assertSame(20, strlen($invitation->access_token), 'Panjang token harus mengikuti config.');
 
         Mail::assertSent(AssessmentInvitation::class, fn ($mail) => $mail->hasTo('baru@example.test'));
     }
@@ -235,10 +236,57 @@ class InvitationTest extends TestCase
         config(['assessment.invitation.token_length' => 0]);
 
         $this->actingAs($dosen)
-            ->post(route('dashboard.invite'), $this->payload('peer', 'nol@example.test'))
+            ->post(route('dashboard.invite'), $this->payload('superior', 'nol1@example.test'))
+            ->assertSessionHas('success');
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('peer', 'nol2@example.test'))
             ->assertSessionHas('success');
 
-        $this->assertGreaterThanOrEqual(16, strlen(AssessmentRequest::firstOrFail()->access_token));
+        $tokens = AssessmentRequest::pluck('access_token');
+
+        $this->assertCount(2, $tokens, 'Undangan kedua tidak boleh gagal karena token bentrok.');
+        $this->assertSame([16, 16], $tokens->map(fn ($token) => strlen($token))->all());
+        $this->assertNotSame($tokens[0], $tokens[1], 'Token harus acak, bukan konstanta.');
+    }
+
+    public function test_token_lebih_panjang_dari_kolom_dipotong_ke_64(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        config(['assessment.invitation.token_length' => 100]);
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('peer', 'panjang@example.test'))
+            ->assertSessionHas('success');
+
+        $this->assertSame(64, strlen(AssessmentRequest::firstOrFail()->access_token));
+    }
+
+    public function test_kuota_nol_di_config_tidak_memblokir_semua_undangan(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+        config(['assessment.invitation.max_superior' => 0]);
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('superior', 'satu@example.test'))
+            ->assertSessionHas('success');
+
+        $this->actingAs($dosen)
+            ->post(route('dashboard.invite'), $this->payload('superior', 'dua@example.test'))
+            ->assertSessionHas('error', 'Batas Tercapai: Anda hanya boleh mengundang maksimal 1 Atasan.');
+    }
+
+    public function test_dashboard_menampilkan_batas_dari_config(): void
+    {
+        $dosen = $this->dosen();
+        config(['assessment.invitation.max_superior' => 0, 'assessment.invitation.max_peer' => 9]);
+
+        $this->actingAs($dosen)
+            ->get(route('dashboard.index'))
+            ->assertOk()
+            ->assertSee('Atasan (0/1)')
+            ->assertSee('Sejawat (0/9)');
     }
 
     public function test_undangan_tanpa_periode_aktif_404(): void
