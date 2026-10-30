@@ -34,7 +34,14 @@ class RegistrationTest extends TestCase
         $response->assertRedirect(route('dashboard.index', absolute: false));
     }
 
-    public function test_jurusan_users_are_redirected_to_their_dashboard_after_registering(): void
+    public function test_form_registrasi_tidak_menawarkan_peran_jurusan(): void
+    {
+        $this->get('/register')
+            ->assertOk()
+            ->assertDontSee('Pihak Jurusan');
+    }
+
+    public function test_peran_jurusan_dari_form_publik_diabaikan(): void
     {
         $response = $this->post('/register', [
             'name' => 'Jurusan User',
@@ -47,8 +54,8 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', [
             'email' => 'jurusan@example.com',
-            'role' => 'jurusan',
+            'role' => 'dosen',
         ]);
-        $response->assertRedirect(route('jurusan.dashboard', absolute: false));
+        $response->assertRedirect(route('dashboard.index', absolute: false));
     }
 }
