@@ -8,6 +8,14 @@ class AssessmentRequest extends Model
 {
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return [
+            'is_completed' => 'boolean',
+            'completed_at' => 'datetime',
+        ];
+    }
+
     // Relasi ke User yang dinilai
     public function user()
     {
