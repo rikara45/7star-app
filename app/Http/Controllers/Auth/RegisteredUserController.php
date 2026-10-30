@@ -33,28 +33,19 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:dosen,jurusan'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'role' => 'dosen',
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Redirect sesuai role agar penguji langsung masuk ke halaman yang benar
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role === 'jurusan') {
-            return redirect()->route('jurusan.dashboard');
-        }
-
-        // Default ke dashboard dosen
         return redirect()->route('dashboard.index');
     }
 }

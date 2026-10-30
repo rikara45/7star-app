@@ -173,6 +173,16 @@
                     </div>
                 </div>
 
+                @if($errors->any())
+                    <div class="mb-6 bg-red-50 text-red-700 px-4 py-3 rounded-lg border border-red-200">
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 @if(session('success_portfolio')) <div class="mb-6 bg-green-50 text-green-700 px-4 py-3 rounded-lg border border-green-200 flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>{{ session('success_portfolio') }}</div> @endif
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -213,12 +223,13 @@
                                     </div>
                                 @else
                                     <div class="text-xs bg-white bg-opacity-60 p-2 rounded border border-gray-100 mb-2">
-                                        <a href="{{ Storage::url($data->file_path) }}" target="_blank" class="flex items-center text-indigo-600 font-bold hover:underline mb-1"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>Lihat File</a>
+                                        <a href="{{ route('portfolio.file', $data) }}" target="_blank" class="flex items-center text-indigo-600 font-bold hover:underline mb-1"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>Lihat File</a>
                                         <p class="text-gray-500 truncate">{{ $data->description ?? 'Tanpa keterangan' }}</p>
                                     </div>
                                     <details class="group/edit relative">
                                         <summary class="list-none text-[10px] text-gray-400 cursor-pointer hover:text-indigo-600 text-right flex justify-end items-center"><span>Ganti File?</span><svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></summary>
                                         <div class="mt-2 pt-2 border-t border-gray-200 absolute bottom-full right-0 bg-white p-3 rounded shadow-lg border w-64 z-10 mb-1">
+                                            <p class="text-[10px] text-red-500 mb-2">Mengganti berkas akan mengosongkan nilai verifikasi; jurusan perlu menilai ulang.</p>
                                             <input type="file" name="file" required class="block w-full text-xs text-gray-500 mb-2">
                                             <button type="submit" class="w-full bg-gray-800 text-white text-xs py-1 rounded font-bold">Update</button>
                                         </div>

@@ -2,74 +2,64 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePortfolioRequest;
 use App\Models\Portfolio;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PortfolioController extends Controller
 {
-    // Daftar Kategori sesuai Dokumen Rubrik Penilaian
-    private $categories = [
-        'Pendidikan & Sertifikasi',
-        'Pengalaman Jabatan',
-        'Kinerja Akademik',
-        'Riset & Kolaborasi',
-        'Inovasi Institusional',
-        'Empowerment & Mentoring',
-        'Integritas & Teladan',
-        'Kapasitas Digital',
-        'Komunikasi Dua Arah',
-        'Dampak Eksternal',
-    ];
-
-    public function store(Request $request)
+    public function store(StorePortfolioRequest $request)
     {
-        $request->validate([
-            'category' => 'required|string',
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048', // Max 2MB
-            'description' => 'nullable|string',
+        $portfolio = Portfolio::firstOrNew([
+            'user_id' => $request->user()->id,
+            'category' => $request->validated('category'),
         ]);
 
-        $user = Auth::user();
+        try {
+            $filePath = $request->file('file')->store('portfolios', 'local');
+        } catch (\Throwable $e) {
+            report($e);
 
-        // Upload File
-        if ($request->hasFile('file')) {
-            // Simpan ke folder: storage/app/public/portfolios
-            $filePath = $request->file('file')->store('portfolios', 'public');
-
-            // Simpan ke Database
-            // Kita pakai updateOrCreate agar user bisa menimpa file lama jika upload lagi di kategori yang sama
-            Portfolio::updateOrCreate(
-                ['user_id' => $user->id, 'category' => $request->category],
-                [
-                    'file_path' => $filePath,
-                    'description' => $request->description,
-                    'status' => 'uploaded', // Status awal
-                    'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
-                ]
-            );
-
-            return back()->with('success_portfolio', 'Bukti portofolio berhasil diunggah!');
+            return back()->with('error', 'Berkas gagal disimpan. Coba lagi atau hubungi admin.');
         }
 
-        return back()->with('error', 'File gagal diunggah.');
+        if ($filePath === false) {
+            return back()->with('error', 'Berkas gagal disimpan. Coba lagi atau hubungi admin.');
+        }
+
+        try {
+            DB::transaction(function () use ($portfolio, $request, $filePath) {
+                $portfolio->fill([
+                    'file_path' => $filePath,
+                    'status' => 'uploaded', // Status awal
+                    'score' => 0, // JANGAN KASIH 10 DULU. Tunggu Jurusan.
+                ]);
+
+                if ($request->has('description')) {
+                    $portfolio->description = $request->validated('description');
+                }
+
+                $portfolio->save();
+            });
+        } catch (\Throwable $e) {
+            Storage::disk('local')->delete($filePath);
+
+            throw $e;
+        }
+
+        return back()->with('success_portfolio', 'Bukti portofolio berhasil diunggah!');
     }
 
-    // Helper untuk mengambil list kategori beserta hint-nya
-    public static function getCategories()
+    public function download(Portfolio $portfolio)
     {
-        return [
-            'Pendidikan & Sertifikasi' => 'Ijazah, sertifikat pelatihan, Serdos',
-            'Pengalaman Jabatan' => 'SK jabatan, bukti memimpin proyek',
-            'Kinerja Akademik' => 'Jurnal Scopus, buku, HKI',
-            'Riset & Kolaborasi' => 'MoU/MoA, proposal riset, output',
-            'Inovasi Institusional' => 'Inovasi pembelajaran, SOP digital',
-            'Empowerment & Mentoring' => 'Bukti coaching, mentoring staf/mahasiswa',
-            'Integritas & Teladan' => 'Rekam etik, disiplin, penghargaan',
-            'Kapasitas Digital' => 'Bukti implementasi platform digital',
-            'Komunikasi Dua Arah' => 'Notula, tindak lanjut masukan',
-            'Dampak Eksternal' => 'Akreditasi, ranking, kontribusi publik',
-        ];
+        $this->authorize('download', $portfolio);
+
+        $disk = collect(['local', 'public'])
+            ->first(fn (string $disk) => Storage::disk($disk)->exists($portfolio->file_path));
+
+        abort_if($disk === null, 404);
+
+        return Storage::disk($disk)->response($portfolio->file_path);
     }
 }

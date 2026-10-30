@@ -8,6 +8,7 @@ use App\Models\Portfolio;
 use App\Models\UniversitySetting;
 use App\Models\User;
 use App\Services\AssessmentScoreService;
+use App\Support\PortfolioCategories;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -68,7 +69,7 @@ class JurusanController extends Controller
     {
         $dosen = User::findOrFail($userId);
         $portfolios = Portfolio::where('user_id', $userId)->get()->keyBy('category');
-        $categories = PortfolioController::getCategories();
+        $categories = PortfolioCategories::all();
 
         return view('jurusan.verifikasi.detail', compact('dosen', 'portfolios', 'categories'));
     }

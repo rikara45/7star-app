@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
 
     // Upload Portofolio
     Route::post('/upload-portofolio', [PortfolioController::class, 'store'])->name('portfolio.store');
+    Route::get('/portofolio/{portfolio}/berkas', [PortfolioController::class, 'download'])->name('portfolio.file');
 
     // Proses Hitung & AI (tombol Proses)
     Route::post('/proses-hasil', [UserDashboardController::class, 'generateResult'])->name('result.generate');

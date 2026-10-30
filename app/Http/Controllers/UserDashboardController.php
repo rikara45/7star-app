@@ -9,6 +9,7 @@ use App\Models\AssessmentRequest;
 use App\Models\UniversitySetting;
 use App\Services\AiNarrativeService;
 use App\Services\AssessmentScoreService;
+use App\Support\PortfolioCategories;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +53,7 @@ class UserDashboardController extends Controller
         $isSelfDone = $selfRequest && $selfRequest->is_completed;
 
         // 2. Ambil Data Portofolio (Pakai Fungsi Privat)
-        $categories = PortfolioController::getCategories();
+        $categories = PortfolioCategories::all();
         $realtimeData = $this->scoreService->calculate($user, $period);
 
         $myPortfolios = $realtimeData['portfolios']->keyBy('category');
@@ -208,7 +209,7 @@ class UserDashboardController extends Controller
         }
 
         // 3. Siapkan Prompt Portofolio
-        $allCategories = PortfolioController::getCategories();
+        $allCategories = PortfolioCategories::all();
         $portfolioStringLines = [];
 
         foreach ($allCategories as $catName => $catHint) {
