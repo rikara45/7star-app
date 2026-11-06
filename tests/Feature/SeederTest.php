@@ -55,4 +55,18 @@ class SeederTest extends TestCase
             'score' => 4,
         ]);
     }
+
+    public function test_butir_pertanyaan_bisa_dibuat_lewat_model(): void
+    {
+        $question = MasterQuestion::create([
+            'dimension' => 'Profesionalisme',
+            'statement_self' => 'Pernyataan self',
+            'statement_other' => 'Pernyataan other',
+        ]);
+
+        $this->assertDatabaseHas('master_questions', [
+            'id' => $question->id,
+            'dimension' => 'Profesionalisme',
+        ]);
+    }
 }
