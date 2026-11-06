@@ -52,9 +52,10 @@ class JurusanController extends Controller
             $query->where('name', 'like', '%'.$request->search.'%');
         }
 
-        // Filter Status
+        // Filter Status. whereHas dipakai karena having() pada alias withCount
+        // tidak valid tanpa GROUP BY (SQLite dan MySQL ONLY_FULL_GROUP_BY menolak).
         if ($request->status == 'pending') {
-            $query->having('pending_count', '>', 0);
+            $query->whereHas('portfolios', fn ($q) => $q->where('status', 'uploaded'));
         }
 
         $dosens = $query->orderBy('pending_count', 'desc')->paginate(10);
