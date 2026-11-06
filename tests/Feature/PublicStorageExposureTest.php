@@ -52,7 +52,11 @@ class PublicStorageExposureTest extends TestCase
     {
         $htaccess = file_get_contents(public_path('.htaccess'));
 
-        $this->assertStringContainsString('/storage/portfolios', $htaccess);
+        $this->assertMatchesRegularExpression(
+            '/^RedirectMatch\s+404\s+\^\/storage\/portfolios\//m',
+            $htaccess,
+            'Aturan .htaccess harus benar-benar menolak /storage/portfolios/, bukan hanya menyebutnya di komentar.'
+        );
     }
 
     public function test_logo_pada_pdf_memakai_path_disk_publik(): void
