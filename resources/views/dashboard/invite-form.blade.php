@@ -25,8 +25,8 @@
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Hubungan</label>
                 <select name="relationship" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                    <option value="superior" @selected(old('relationship') === 'superior') {{ $countSuperior >= $maxSuperior ? 'disabled' : '' }}>Atasan ({{ $countSuperior }}/{{ $maxSuperior }}) {{ $countSuperior >= $maxSuperior ? '- Penuh' : '' }}</option>
-                    <option value="peer" @selected(old('relationship', 'peer') === 'peer') {{ $countPeer >= $maxPeer ? 'disabled' : '' }}>Sejawat ({{ $countPeer }}/{{ $maxPeer }}) {{ $countPeer >= $maxPeer ? '- Penuh' : '' }}</option>
+                    <option value="superior" @selected(old('relationship') === 'superior') {{ $countSuperior >= $maxSuperior && old('relationship') !== 'superior' ? 'disabled' : '' }}>Atasan ({{ $countSuperior }}/{{ $maxSuperior }}) {{ $countSuperior >= $maxSuperior ? '- Penuh' : '' }}</option>
+                    <option value="peer" @selected(old('relationship') === 'peer') {{ $countPeer >= $maxPeer && old('relationship') !== 'peer' ? 'disabled' : '' }}>Sejawat ({{ $countPeer }}/{{ $maxPeer }}) {{ $countPeer >= $maxPeer ? '- Penuh' : '' }}</option>
                 </select>
                 <x-input-error :messages="$errors->get('relationship')" class="mt-2" />
             </div>

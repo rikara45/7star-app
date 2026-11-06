@@ -88,10 +88,18 @@ class InvitationService
      */
     private function ensureNotInvited(User $user, AssessmentPeriod $period, array $data): void
     {
+        $email = Str::lower(trim($data['email']));
+
+        // Penilai tidak boleh memakai email peserta sendiri: peserta akan menerima
+        // token lewat email lalu bisa mengisi form 70% miliknya sendiri.
+        if ($data['relationship'] !== 'self' && $email === Str::lower(trim($user->email))) {
+            throw new InvitationException('Anda tidak dapat mengundang diri sendiri sebagai penilai.');
+        }
+
         $exists = AssessmentRequest::where('user_id', $user->id)
             ->where('assessment_period_id', $period->id)
             ->where('relationship', $data['relationship'])
-            ->where('assessor_email', $data['email'])
+            ->whereRaw('lower(assessor_email) = ?', [$email])
             ->exists();
 
         if ($exists) {
@@ -106,7 +114,8 @@ class InvitationService
 
             return true;
         } catch (\Throwable $e) {
-            // Undangan tetap sah walau SMTP bermasalah; link bisa dibagikan manual.
+            // Undangan tetap sah walau SMTP bermasalah; pengguna dapat menghapus
+            // lalu membuat undangan baru untuk mencoba pengiriman ulang.
             Log::error('Gagal kirim email undangan: '.$e->getMessage());
 
             return false;
