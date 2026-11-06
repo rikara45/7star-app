@@ -2,17 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\MasterQuestion;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class QuestionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Kosongkan tabel sebelum isi ulang
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('master_questions')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $questions = [
             // 1. Intellectual Stimulation
@@ -169,17 +165,12 @@ class QuestionSeeder extends Seeder
             ],
         ];
 
-        DB::table('master_questions')->insert($questions);
-        
-        // Buat ulang periode penilaian karena tabel terhapus saat fresh migrate
-        DB::table('assessment_periods')->insert([
-            'name' => 'Periode Penilaian Awal',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        
-        // Panggil AdminSeeder juga agar akun admin tidak hilang
-        $this->call(AdminSeeder::class);
+        foreach ($questions as $question) {
+            MasterQuestion::updateOrCreate([
+                'dimension' => $question['dimension'],
+                'statement_self' => $question['statement_self'],
+                'statement_other' => $question['statement_other'],
+            ]);
+        }
     }
 }
