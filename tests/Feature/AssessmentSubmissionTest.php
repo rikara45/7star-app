@@ -9,6 +9,7 @@ use App\Models\MasterQuestion;
 use App\Models\User;
 use App\Services\AssessmentScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -131,7 +132,10 @@ class AssessmentSubmissionTest extends TestCase
     {
         [$request, $questions] = $this->tokenWithQuestions(3);
 
-        // Data lama dari create() bisa punya dua baris untuk pertanyaan yang sama.
+        // Data lama dari create() bisa punya dua baris untuk pertanyaan yang sama;
+        // index unik dilepas agar skenario warisan ini tetap bisa diuji.
+        Schema::table('assessment_responses', fn ($table) => $table->dropUnique('assessment_responses_request_question_unique'));
+
         foreach ([5, 1] as $score) {
             AssessmentResponse::forceCreate([
                 'assessment_request_id' => $request->id,
