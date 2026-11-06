@@ -95,6 +95,15 @@ memakai WIB. Backfill hanya perlu dilakukan bila tanggal lama memang harus tampi
 php artisan storage:link
 ```
 
+Pastikan `public/storage` adalah symlink hasil perintah di atas, bukan folder salinan. Bila
+sebelumnya berupa folder salinan, pindahkan isinya lalu hapus foldernya.
+
+Portofolio **tidak boleh** disimpan di disk `public` (`storage/app/public/portfolios`), karena
+symlink akan menyajikannya sebagai file statis tanpa cek policy. Unggahan baru memakai disk `local`,
+dan `public/.htaccess` menolak `/storage/portfolios/` sebagai lapisan kedua.
+
+Setelah deploy, cek `https://domain-anda/storage/portfolios/` harus 404.
+
 Pastikan folder berikut dapat ditulis oleh user web server:
 
 - `storage/`
