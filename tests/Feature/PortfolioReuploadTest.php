@@ -23,6 +23,8 @@ class PortfolioReuploadTest extends TestCase
     {
         Storage::fake('local');
 
+        AssessmentPeriod::create(['name' => 'Periode Uji', 'is_active' => true]);
+
         $dosen = User::factory()->create(['role' => 'dosen']);
         $kategori = array_key_first(PortfolioCategories::all());
 
@@ -98,6 +100,8 @@ class PortfolioReuploadTest extends TestCase
     {
         Storage::fake('local');
         Storage::disk('local')->put('portfolios/lama.pdf', 'isi lama');
+
+        AssessmentPeriod::create(['name' => 'Periode Uji', 'is_active' => true]);
 
         $dosen = User::factory()->create(['role' => 'dosen']);
         $kategori = array_key_first(PortfolioCategories::all());

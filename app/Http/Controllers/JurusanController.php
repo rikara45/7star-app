@@ -18,14 +18,17 @@ class JurusanController extends Controller
     // 1. HALAMAN DASHBOARD (Hanya Statistik)
     public function dashboard()
     {
+        // Statistik mengikuti periode aktif; tanpa periode aktif semua dihitung.
+        $periodId = $this->activePeriodId();
+
         // Statistik Ringkas
         $totalDosen = User::where('role', 'dosen')->count();
 
         // Hitung total item portofolio yang statusnya masih 'uploaded' (belum diverifikasi)
-        $totalPendingItems = Portfolio::where('status', 'uploaded')->count();
+        $totalPendingItems = Portfolio::where('status', 'uploaded')->forPeriod($periodId)->count();
 
         // Hitung total item yang sudah verified
-        $totalVerifiedItems = Portfolio::where('status', 'verified')->count();
+        $totalVerifiedItems = Portfolio::where('status', 'verified')->forPeriod($periodId)->count();
 
         return view('jurusan.dashboard', compact('totalDosen', 'totalPendingItems', 'totalVerifiedItems'));
     }
@@ -33,14 +36,18 @@ class JurusanController extends Controller
     // 2. HALAMAN LIST VERIFIKASI (Tabel Dosen)
     public function verificationIndex(Request $request)
     {
+        $periodId = $this->activePeriodId();
+
         // Kita ambil data Dosen
         $query = User::where('role', 'dosen')
             // 1. Hitung Dokumen Pending (Status 'uploaded')
-            ->withCount(['portfolios as pending_count' => function ($q) {
-                $q->where('status', 'uploaded');
+            ->withCount(['portfolios as pending_count' => function ($q) use ($periodId) {
+                $q->where('status', 'uploaded')->forPeriod($periodId);
             }])
             // 2. Hitung Total Dokumen (PENTING: Untuk tahu dia sudah kirim atau belum)
-            ->withCount('portfolios as total_portfolios')
+            ->withCount(['portfolios as total_portfolios' => function ($q) use ($periodId) {
+                $q->forPeriod($periodId);
+            }])
 
             // Load analisis AI (opsional, bawaan kode lama Anda)
             ->with(['aiAnalyses' => function ($q) {
@@ -55,7 +62,7 @@ class JurusanController extends Controller
         // Filter Status. whereHas dipakai karena having() pada alias withCount
         // tidak valid tanpa GROUP BY (SQLite dan MySQL ONLY_FULL_GROUP_BY menolak).
         if ($request->status == 'pending') {
-            $query->whereHas('portfolios', fn ($q) => $q->where('status', 'uploaded'));
+            $query->whereHas('portfolios', fn ($q) => $q->where('status', 'uploaded')->forPeriod($periodId));
         }
 
         $dosens = $query->orderBy('pending_count', 'desc')->paginate(10);
@@ -68,7 +75,10 @@ class JurusanController extends Controller
     public function show($userId)
     {
         $dosen = $this->dosenOrFail($userId);
-        $portfolios = Portfolio::where('user_id', $userId)->get()->keyBy('category');
+        $portfolios = Portfolio::where('user_id', $userId)
+            ->forPeriod($this->activePeriodId())
+            ->get()
+            ->keyBy('category');
         $categories = PortfolioCategories::all();
 
         return view('jurusan.verifikasi.detail', compact('dosen', 'portfolios', 'categories'));
@@ -158,5 +168,10 @@ class JurusanController extends Controller
     private function dosenOrFail($userId): User
     {
         return User::where('role', 'dosen')->findOrFail($userId);
+    }
+
+    private function activePeriodId(): ?int
+    {
+        return AssessmentPeriod::where('is_active', true)->orderBy('id')->value('id');
     }
 }

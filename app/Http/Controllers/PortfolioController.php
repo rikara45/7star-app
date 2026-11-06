@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePortfolioRequest;
+use App\Models\AssessmentPeriod;
 use App\Models\Portfolio;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -13,10 +14,26 @@ class PortfolioController extends Controller
 
     public function store(StorePortfolioRequest $request)
     {
-        $portfolio = Portfolio::firstOrNew([
-            'user_id' => $request->user()->id,
-            'category' => $request->validated('category'),
-        ]);
+        $period = AssessmentPeriod::where('is_active', true)->orderBy('id')->first();
+
+        if ($period === null) {
+            return back()->with('error_portfolio', 'Tidak ada periode penilaian aktif. Hubungi admin.');
+        }
+
+        // forPeriod menyertakan baris warisan tanpa periode supaya portofolio
+        // verified lama tetap tidak bisa ditimpa.
+        $portfolio = Portfolio::where('user_id', $request->user()->id)
+            ->where('category', $request->validated('category'))
+            ->forPeriod($period->id)
+            ->first();
+
+        if ($portfolio === null) {
+            $portfolio = new Portfolio([
+                'user_id' => $request->user()->id,
+                'assessment_period_id' => $period->id,
+                'category' => $request->validated('category'),
+            ]);
+        }
 
         // Cek awal hanya untuk menghindari penyimpanan berkas yang pasti ditolak;
         // keputusan akhir diambil ulang di dalam transaksi dengan lockForUpdate.

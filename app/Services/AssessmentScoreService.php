@@ -89,7 +89,9 @@ class AssessmentScoreService
             })->implode("\n");
         }
 
-        $portfolios = Portfolio::where('user_id', $user->id)->get();
+        $portfolios = Portfolio::where('user_id', $user->id)
+            ->forPeriod($period->id)
+            ->get();
         $portfolioScore = min($portfolios->sum('score'), 100);
         $finalScore = number_format(
             ($behaviorScore100 * self::BOBOT_PERILAKU) + ($portfolioScore * self::BOBOT_PORTOFOLIO),
