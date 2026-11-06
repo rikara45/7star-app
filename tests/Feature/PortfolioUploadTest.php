@@ -126,7 +126,7 @@ class PortfolioUploadTest extends TestCase
         $this->assertDatabaseCount('portfolios', 1);
     }
 
-    public function test_peringatan_reset_nilai_tampil_saat_berkas_sudah_ada(): void
+    public function test_portofolio_terverifikasi_tidak_menawarkan_ganti_berkas(): void
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
         AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
@@ -142,7 +142,8 @@ class PortfolioUploadTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('dashboard.index'))
             ->assertOk()
-            ->assertSee('Mengganti berkas akan mengosongkan nilai verifikasi');
+            ->assertDontSee('Ganti File?')
+            ->assertSee('Sudah diverifikasi');
     }
 
     public function test_kegagalan_menulis_berkas_tidak_menyimpan_baris(): void
@@ -170,7 +171,7 @@ class PortfolioUploadTest extends TestCase
                     'category' => array_key_first(PortfolioCategories::all()),
                     'file' => UploadedFile::fake()->create('bukti.pdf', 100, 'application/pdf'),
                 ])
-                ->assertSessionHas('error');
+                ->assertSessionHas('error_portfolio');
 
             $this->assertDatabaseCount('portfolios', 0);
         } finally {
