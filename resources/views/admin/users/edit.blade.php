@@ -14,34 +14,40 @@
                 
                 <form action="{{ route('admin.users.update', $user->id) }}" method="POST" class="space-y-6">
                     @csrf
-                    @method('PUT') <div>
+                    @method('PUT')
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                        <input type="text" name="name" value="{{ $user->name }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" value="{{ $user->email }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Jabatan</label>
-                        <input type="text" name="jabatan" value="{{ $user->jabatan }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="jabatan" value="{{ old('jabatan', $user->jabatan) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <x-input-error :messages="$errors->get('jabatan')" class="mt-2" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Role</label>
                         <select name="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50">
-                            <option value="dosen" {{ $user->role == 'dosen' ? 'selected' : '' }}>Dosen</option>
-                            <option value="jurusan" {{ $user->role == 'jurusan' ? 'selected' : '' }}>Jurusan</option>
-                            <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="dosen" @selected(old('role', $user->role) === 'dosen')>Dosen</option>
+                            <option value="jurusan" @selected(old('role', $user->role) === 'jurusan')>Jurusan</option>
+                            <option value="admin" @selected(old('role', $user->role) === 'admin')>Admin</option>
                         </select>
+                        <x-input-error :messages="$errors->get('role')" class="mt-2" />
                     </div>
 
                     <div class="bg-yellow-50 p-4 rounded border border-yellow-200">
                         <label class="block text-sm font-bold text-yellow-800">Ubah Password (Opsional)</label>
                         <p class="text-xs text-yellow-600 mb-2">Biarkan kosong jika tidak ingin mengubah password user.</p>
                         <input type="password" name="password" placeholder="Password Baru..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
 
                     <div class="pt-4 flex justify-end space-x-3">

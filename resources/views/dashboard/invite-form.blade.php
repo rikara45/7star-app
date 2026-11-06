@@ -14,18 +14,21 @@
             @csrf
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Nama Penilai</label>
-                <input type="text" name="name" required class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm">
+                <input type="text" name="name" value="{{ old('name') }}" required class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm">
+                <x-input-error :messages="$errors->get('name')" class="mt-2" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Email Penilai</label>
-                <input type="email" name="email" required class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm">
+                <input type="email" name="email" value="{{ old('email') }}" required class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm">
+                <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Hubungan</label>
                 <select name="relationship" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                    <option value="superior" {{ $countSuperior >= $maxSuperior ? 'disabled' : '' }}>Atasan ({{ $countSuperior }}/{{ $maxSuperior }}) {{ $countSuperior >= $maxSuperior ? '- Penuh' : '' }}</option>
-                    <option value="peer" {{ $countPeer >= $maxPeer ? 'disabled' : '' }}>Sejawat ({{ $countPeer }}/{{ $maxPeer }}) {{ $countPeer >= $maxPeer ? '- Penuh' : '' }}</option>
+                    <option value="superior" @selected(old('relationship') === 'superior') {{ $countSuperior >= $maxSuperior ? 'disabled' : '' }}>Atasan ({{ $countSuperior }}/{{ $maxSuperior }}) {{ $countSuperior >= $maxSuperior ? '- Penuh' : '' }}</option>
+                    <option value="peer" @selected(old('relationship', 'peer') === 'peer') {{ $countPeer >= $maxPeer ? 'disabled' : '' }}>Sejawat ({{ $countPeer }}/{{ $maxPeer }}) {{ $countPeer >= $maxPeer ? '- Penuh' : '' }}</option>
                 </select>
+                <x-input-error :messages="$errors->get('relationship')" class="mt-2" />
             </div>
             <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-lg shadow transition transform hover:-translate-y-0.5">Generate Undangan</button>
         </form>

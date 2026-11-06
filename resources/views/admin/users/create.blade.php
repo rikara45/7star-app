@@ -21,28 +21,32 @@
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                            <input type="text" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="name" value="{{ old('name') }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Alamat Email</label>
-                            <input type="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Jabatan (Opsional)</label>
-                            <input type="text" name="jabatan" placeholder="Contoh: Kaprodi Teknik, Dosen Tetap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="jabatan" value="{{ old('jabatan') }}" placeholder="Contoh: Kaprodi Teknik, Dosen Tetap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <x-input-error :messages="$errors->get('jabatan')" class="mt-2" />
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Role (Peran)</label>
                                 <select name="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50">
-                                    <option value="dosen">Dosen (Peserta Penilaian)</option>
-                                    <option value="jurusan">Jurusan (Verifikator)</option>
-                                    <option value="admin">Admin Sistem</option>
+                                    <option value="dosen" @selected(old('role', 'dosen') === 'dosen')>Dosen (Peserta Penilaian)</option>
+                                    <option value="jurusan" @selected(old('role') === 'jurusan')>Jurusan (Verifikator)</option>
+                                    <option value="admin" @selected(old('role') === 'admin')>Admin Sistem</option>
                                 </select>
                                 <p class="text-xs text-gray-500 mt-1">Tentukan hak akses user ini.</p>
+                                <x-input-error :messages="$errors->get('role')" class="mt-2" />
                             </div>
 
                             <div>
