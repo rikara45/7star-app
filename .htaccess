@@ -1,0 +1,16 @@
+# Fallback keamanan bila docroot hosting tidak bisa diarahkan ke public/.
+# Rekomendasi utama tetap: set docroot ke public/ sehingga file ini tidak dipakai.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Jangan menulis ulang request yang sudah masuk ke public/ (mencegah loop).
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Jangan pernah menyajikan file sensitif bila docroot masih menunjuk ke root repo.
+<FilesMatch "^\.(env|git|gitignore|htaccess|htpasswd)">
+    Require all denied
+</FilesMatch>
