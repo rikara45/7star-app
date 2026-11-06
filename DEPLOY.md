@@ -10,8 +10,12 @@ Cara paling aman: arahkan domain/subdomain ke folder `public/` (bukan root repo)
 Bila hosting tidak mengizinkan perubahan docroot:
 
 - Pastikan file `.htaccess` di root repo ikut terunggah.
-- File itu menulis ulang request ke `public/` dan menolak akses ke `.env`, `.git`, serta dotfile lain.
-- Setelah deploy, cek `https://domain-anda/.env` harus 403 atau 404, bukan berisi teks.
+- File itu menulis ulang request ke `public/` (aman untuk instalasi subdirektori), menolak akses ke
+  dotfile seperti `.env` dan `.git`, serta memblokir `database/`, `storage/`, `vendor/`,
+  `node_modules/`, dan file `*.sqlite`, `*.log`, `*.zip`, `*.bak`. Folder `.well-known` tetap
+  dibuka agar perpanjangan SSL otomatis tidak gagal.
+- Setelah deploy, cek `https://domain-anda/.env` dan `https://domain-anda/.git/config` harus 403
+  atau 404, bukan berisi teks.
 
 ## 2. Yang diunggah
 
@@ -76,10 +80,14 @@ sebaiknya dibuat eksplisit:
 php artisan db:seed --force
 ```
 
-Setelah akun admin dibuat, kosongkan `SEED_ADMIN_PASSWORD` di `.env`. Seeder menolak berjalan di
-`production` bila password masih `password`.
+Setelah akun admin dibuat, kosongkan `SEED_ADMIN_PASSWORD` di `.env`. Seeder hanya menolak password
+literal `password` di `production`, jadi tetap gunakan password panjang dan unik. Bila kredensial
+seeder kosong, seeder tidak membuat akun apa pun.
 
 Bila database sudah berisi data, jangan jalankan `migrate:fresh`.
+
+Catatan timezone: data lama tersimpan dalam UTC. Setelah `APP_TIMEZONE=Asia/Jakarta`, baris baru
+memakai WIB. Backfill hanya perlu dilakukan bila tanggal lama memang harus tampil dalam WIB.
 
 ## 6. Storage dan izin
 

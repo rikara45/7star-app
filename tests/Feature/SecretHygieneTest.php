@@ -6,12 +6,15 @@ use Tests\TestCase;
 
 class SecretHygieneTest extends TestCase
 {
+    private const EXTENSIONS = ['php', 'js', 'json', 'css'];
+
     public function test_tidak_ada_key_google_tertanam_di_kode(): void
     {
-        $files = array_merge(
-            glob(base_path('config/*.php')) ?: [],
-            $this->phpFiles(base_path('app')),
-        );
+        $files = [base_path('.env.example')];
+
+        foreach (['config', 'app', 'routes', 'resources', 'database', 'tests', 'public/build/assets'] as $directory) {
+            $files = array_merge($files, $this->textFiles(base_path($directory)));
+        }
 
         $matches = [];
 
@@ -27,15 +30,25 @@ class SecretHygieneTest extends TestCase
     /**
      * @return list<string>
      */
-    private function phpFiles(string $directory): array
+    private function textFiles(string $directory): array
     {
+        if (! is_dir($directory)) {
+            return [];
+        }
+
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
         $files = [];
 
         foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getExtension() === 'php') {
-                $files[] = $file->getPathname();
+            if (! $file->isFile() || ! in_array($file->getExtension(), self::EXTENSIONS, true)) {
+                continue;
             }
+
+            if ($file->getSize() > 2 * 1024 * 1024) {
+                continue;
+            }
+
+            $files[] = $file->getPathname();
         }
 
         return $files;

@@ -5,12 +5,14 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Jangan menulis ulang request yang sudah masuk ke public/ (mencegah loop).
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # Jangan menulis ulang request yang sudah masuk ke public/ (termasuk
+    # instalasi di subdirektori, mis. /kampus/public/...).
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^(?!public/)(.*)$ public/$1 [L]
 </IfModule>
 
 # Jangan pernah menyajikan file sensitif bila docroot masih menunjuk ke root repo.
-<FilesMatch "^\.(env|git|gitignore|htaccess|htpasswd)">
-    Require all denied
-</FilesMatch>
+RedirectMatch 404 "(^|/)\.(?!well-known)"
+RedirectMatch 404 "(^|/)(database|storage|vendor|node_modules)/"
+RedirectMatch 404 "\.(sqlite|log|zip|bak)$"
