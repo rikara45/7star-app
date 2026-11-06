@@ -16,6 +16,13 @@ class PortfolioUploadTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+    }
+
     public function test_kategori_di_luar_daftar_ditolak(): void
     {
         Storage::fake('local');
@@ -86,7 +93,6 @@ class PortfolioUploadTest extends TestCase
         Storage::fake('local');
 
         $dosen = User::factory()->create(['role' => 'dosen']);
-        AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
 
         $this->actingAs($dosen)
             ->from(route('dashboard.index'))
@@ -129,7 +135,6 @@ class PortfolioUploadTest extends TestCase
     public function test_portofolio_terverifikasi_tidak_menawarkan_ganti_berkas(): void
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
-        AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
 
         Portfolio::create([
             'user_id' => $dosen->id,

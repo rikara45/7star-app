@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\AiAnalysis;
 use App\Models\AssessmentPeriod;
+use App\Models\Portfolio;
 use App\Models\User;
 use App\Support\PortfolioCategories;
+use Illuminate\Support\Collection;
 
 /**
  * Satu-satunya jalur penyusunan hasil penilaian dosen: data tampilan (analisis
@@ -99,7 +101,7 @@ class AssessmentResultService
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, \App\Models\Portfolio>  $portfolios
+     * @param  Collection<int, Portfolio>  $portfolios
      */
     private function portfolioDetail($portfolios): string
     {

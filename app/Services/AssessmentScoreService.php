@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AssessmentPeriod;
 use App\Models\Portfolio;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -68,7 +69,7 @@ class AssessmentScoreService
      *     finalScore: string,
      *     stars: string,
      *     dimensionString: string,
-     *     portfolios: \Illuminate\Support\Collection,
+     *     portfolios: Collection,
      *     dimensionDetails: array<string, float>
      * }
      */
@@ -88,7 +89,9 @@ class AssessmentScoreService
             })->implode("\n");
         }
 
-        $portfolios = Portfolio::where('user_id', $user->id)->get();
+        $portfolios = Portfolio::where('user_id', $user->id)
+            ->forPeriod($period->id)
+            ->get();
         $portfolioScore = min($portfolios->sum('score'), 100);
         $finalScore = number_format(
             ($behaviorScore100 * self::BOBOT_PERILAKU) + ($portfolioScore * self::BOBOT_PORTOFOLIO),
