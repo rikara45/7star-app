@@ -100,7 +100,7 @@
                                 $rawText = $analysis->ai_narrative;
                                 $rawText = preg_replace('/(\s+)([1-9]\.\s)/', "\n\n$2", $rawText);
                             @endphp
-                            {!! Str::markdown($rawText) !!}
+                            {!! \App\Support\NarrativeMarkdown::toHtml($rawText) !!}
                         </div>
                     </div>
 

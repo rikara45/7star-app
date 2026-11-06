@@ -1,0 +1,18 @@
+# Fallback keamanan bila docroot hosting tidak bisa diarahkan ke public/.
+# Rekomendasi utama tetap: set docroot ke public/ sehingga file ini tidak dipakai.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Jangan menulis ulang request yang sudah masuk ke public/ (termasuk
+    # instalasi di subdirektori, mis. /kampus/public/...).
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^(?!public/)(.*)$ public/$1 [L]
+</IfModule>
+
+# Jangan pernah menyajikan file sensitif bila docroot masih menunjuk ke root repo.
+RedirectMatch 404 "(^|/)\.(?!well-known)"
+RedirectMatch 404 "(^|/)(database|storage|vendor|node_modules)/"
+RedirectMatch 404 "\.(sqlite|log|zip|bak)$"

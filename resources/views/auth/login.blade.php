@@ -44,12 +44,8 @@
 
         <div class="relative flex py-4 items-center">
             <div class="flex-grow border-t border-gray-700"></div>
-            <span class="flex-shrink-0 mx-4 text-gray-500 text-xs uppercase">Belum punya akun?</span>
+            <span class="flex-shrink-0 mx-4 text-gray-500 text-xs uppercase">Akun dibuat oleh admin</span>
             <div class="flex-grow border-t border-gray-700"></div>
         </div>
-
-        <a href="{{ route('register') }}" class="block w-full text-center py-3 px-4 border border-white/20 hover:bg-white/5 text-white font-semibold rounded-xl transition-all duration-300 text-sm">
-            Buat Akun Baru
-        </a>
     </form>
 </x-guest-layout>

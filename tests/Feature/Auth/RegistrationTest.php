@@ -9,53 +9,21 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered(): void
+    public function test_halaman_registrasi_tidak_tersedia(): void
     {
-        $response = $this->get('/register');
-
-        $response->assertStatus(200);
+        $this->get('/register')->assertNotFound();
     }
 
-    public function test_new_users_can_register(): void
+    public function test_pendaftaran_mandiri_tidak_membuat_akun(): void
     {
-        $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->post('/register', [
+            'name' => 'Penyusup',
+            'email' => 'penyusup@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => 'dosen',
-        ]);
+        ])->assertNotFound();
 
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
-            'email' => 'test@example.com',
-            'role' => 'dosen',
-        ]);
-        $response->assertRedirect(route('dashboard.index', absolute: false));
-    }
-
-    public function test_form_registrasi_tidak_menawarkan_peran_jurusan(): void
-    {
-        $this->get('/register')
-            ->assertOk()
-            ->assertDontSee('Pihak Jurusan');
-    }
-
-    public function test_peran_jurusan_dari_form_publik_diabaikan(): void
-    {
-        $response = $this->post('/register', [
-            'name' => 'Jurusan User',
-            'email' => 'jurusan@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-            'role' => 'jurusan',
-        ]);
-
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
-            'email' => 'jurusan@example.com',
-            'role' => 'dosen',
-        ]);
-        $response->assertRedirect(route('dashboard.index', absolute: false));
+        $this->assertDatabaseMissing('users', ['email' => 'penyusup@example.com']);
+        $this->assertGuest();
     }
 }

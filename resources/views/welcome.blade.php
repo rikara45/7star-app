@@ -54,7 +54,7 @@
         z-index: -1; 
 }
 
-        2. Overlay Biru Gelap (KUNCI DESAIN AWAL)
+        /* 2. Overlay Biru Gelap (KUNCI DESAIN AWAL) */
         /* Ini membuat gambar jadi gelap & biru, mirip desain gradasi awal */
         .bg-overlay {
             position: absolute;
@@ -305,9 +305,6 @@
                     <a href="{{ route('dashboard') }}" class="btn btn-register">DASHBOARD</a>
                 @else
                     <a href="{{ route('login') }}" class="btn btn-login">MASUK</a>
-                    @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="btn btn-register">DAFTAR</a>
-                    @endif
                 @endauth
             </div>
         @endif

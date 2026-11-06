@@ -95,7 +95,7 @@
                                 $fixedText = preg_replace('/(\s+)([1-9]\.\s)/', "\n\n$2", $rawText);
                             @endphp
 
-                            {!! Str::markdown($fixedText) !!}
+                            {!! \App\Support\NarrativeMarkdown::toHtml($fixedText) !!}
                         </div>
 
                     </div>

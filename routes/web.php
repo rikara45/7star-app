@@ -17,7 +17,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard'); 
+    return match (auth()->user()->role) {
+        'admin' => redirect()->route('admin.dashboard'),
+        'jurusan' => redirect()->route('jurusan.dashboard'),
+        default => redirect()->route('dashboard.index'),
+    };
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Gabungkan semua route yang butuh auth di satu group
@@ -94,10 +98,6 @@ Route::middleware(['auth', 'role:dosen'])->group(function () {
 
     Route::get('/hasil-penilaian/pdf', [AssessmentResultController::class, 'pdf'])->name('result.pdf');
 });
-
-// PENTING: Karena Anda pakai Laravel Breeze, pastikan route '/dashboard' default 
-// diarahkan ke dashboard buatan kita atau biarkan user akses via menu.
-// Untuk simpelnya, user bisa akses /dashboard-penilaian
 
 // Route untuk Penilaian 360 (Akses via Token, tanpa Login)
 Route::get('/nilai/{token}', [AssessmentController::class, 'show'])
