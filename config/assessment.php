@@ -15,6 +15,6 @@ return [
         'jurusan_name' => env('SEED_JURUSAN_NAME', 'Ketua Program Studi'),
         'jurusan_email' => env('SEED_JURUSAN_EMAIL'),
         'jurusan_password' => env('SEED_JURUSAN_PASSWORD'),
-        'period_name' => env('SEED_PERIOD_NAME', 'Periode '.date('Y')),
+        'period_name' => env('SEED_PERIOD_NAME') ?: 'Periode '.date('Y'),
     ],
 ];
