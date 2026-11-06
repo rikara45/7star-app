@@ -54,7 +54,7 @@
         z-index: -1; 
 }
 
-        2. Overlay Biru Gelap (KUNCI DESAIN AWAL)
+        /* 2. Overlay Biru Gelap (KUNCI DESAIN AWAL) */
         /* Ini membuat gambar jadi gelap & biru, mirip desain gradasi awal */
         .bg-overlay {
             position: absolute;
