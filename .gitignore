@@ -22,7 +22,9 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-7star-App.zip
+*.zip
+*.bak
+/database/*.sqlite
 
 # Artefak graphify (hasil generate, bukan sumber)
 /graphify-out
