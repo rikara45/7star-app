@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AssessmentPeriod;
 use App\Models\Portfolio;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -68,7 +69,7 @@ class AssessmentScoreService
      *     finalScore: string,
      *     stars: string,
      *     dimensionString: string,
-     *     portfolios: \Illuminate\Support\Collection,
+     *     portfolios: Collection,
      *     dimensionDetails: array<string, float>
      * }
      */
