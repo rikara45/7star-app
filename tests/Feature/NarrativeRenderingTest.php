@@ -66,7 +66,7 @@ class NarrativeRenderingTest extends TestCase
     private function analysisDenganNarasi(): array
     {
         $dosen = User::factory()->create(['role' => 'dosen']);
-        $period = AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+        $period = AssessmentPeriod::create(['name' => 'Periode Uji', 'is_active' => true]);
 
         $analysis = AiAnalysis::create([
             'user_id' => $dosen->id,

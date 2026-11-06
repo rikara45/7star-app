@@ -11,7 +11,7 @@ class ConfigTest extends TestCase
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
     }
 
-    public function test_contoh_env_tidak_mengaktifkan_debug(): void
+    public function test_contoh_env_memakai_nilai_produksi_aman(): void
     {
         $values = [];
 
