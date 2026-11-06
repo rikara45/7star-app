@@ -102,7 +102,27 @@ Portofolio **tidak boleh** disimpan di disk `public` (`storage/app/public/portfo
 symlink akan menyajikannya sebagai file statis tanpa cek policy. Unggahan baru memakai disk `local`,
 dan `public/.htaccess` menolak `/storage/portfolios/` sebagai lapisan kedua.
 
-Setelah deploy, cek `https://domain-anda/storage/portfolios/` harus 404.
+Bila instalasi lama masih punya berkas di disk publik, pindahkan dulu ke disk privat:
+
+```bash
+mkdir -p storage/app/private/portfolios
+mv storage/app/public/portfolios/* storage/app/private/portfolios/
+rmdir storage/app/public/portfolios
+```
+
+Di Nginx (termasuk Coolify), tambahkan aturan yang sama karena `.htaccess` tidak dibaca:
+
+```nginx
+location ^~ /storage/portfolios/ { return 404; }
+```
+
+Setelah deploy, cek berkas portofolio yang sudah ada:
+
+```bash
+curl -I https://domain-anda/storage/portfolios/<nama-berkas>.pdf
+```
+
+Respons harus `404`. Bila masih `200`, berkas belum dipindahkan dari disk publik.
 
 Pastikan folder berikut dapat ditulis oleh user web server:
 
