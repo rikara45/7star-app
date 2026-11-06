@@ -16,6 +16,13 @@ class PortfolioController extends Controller
             'category' => $request->validated('category'),
         ]);
 
+        if ($portfolio->exists && $portfolio->status === 'verified') {
+            return back()->with(
+                'error',
+                'Portofolio ini sudah diverifikasi jurusan sehingga tidak dapat diganti. Hubungi jurusan bila perlu perbaikan.'
+            );
+        }
+
         try {
             $filePath = $request->file('file')->store('portfolios', 'local');
         } catch (\Throwable $e) {
