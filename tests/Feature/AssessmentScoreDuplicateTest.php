@@ -9,6 +9,7 @@ use App\Models\MasterQuestion;
 use App\Models\User;
 use App\Services\AssessmentScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -24,6 +25,9 @@ class AssessmentScoreDuplicateTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'dosen']);
         $period = AssessmentPeriod::forceCreate(['name' => 'Periode Uji', 'is_active' => true]);
+
+        // Skenario data warisan: index unik dilepas agar baris ganda bisa dibuat.
+        Schema::table('assessment_responses', fn ($table) => $table->dropUnique('assessment_responses_request_question_unique'));
 
         $request = AssessmentRequest::forceCreate([
             'user_id' => $user->id,

@@ -31,7 +31,7 @@ class InvitationController extends Controller
             'success',
             $result['email_sent']
                 ? 'Undangan berhasil dibuat & email telah dikirim!'
-                : 'Undangan dibuat, tapi Email gagal terkirim. Silakan bagikan Link Manual.'
+                : 'Undangan dibuat, tapi email gagal terkirim. Hapus undangan ini lalu buat ulang untuk mencoba lagi.'
         );
     }
 

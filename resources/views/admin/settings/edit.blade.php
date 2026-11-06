@@ -23,21 +23,25 @@
                         @endif
                         <input type="file" name="uni_logo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         <p class="text-xs text-gray-500 mt-1">Format: PNG/JPG. Transparan lebih baik.</p>
+                        <x-input-error :messages="$errors->get('uni_logo')" class="mt-2" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Universitas</label>
-                        <input type="text" name="uni_name" value="{{ $setting->uni_name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="text" name="uni_name" value="{{ old('uni_name', $setting->uni_name) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <x-input-error :messages="$errors->get('uni_name')" class="mt-2" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
-                        <textarea name="uni_address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{ $setting->uni_address }}</textarea>
+                        <textarea name="uni_address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{ old('uni_address', $setting->uni_address) }}</textarea>
+                        <x-input-error :messages="$errors->get('uni_address')" class="mt-2" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Website / Kontak</label>
-                        <input type="text" name="uni_website" value="{{ $setting->uni_website }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <input type="text" name="uni_website" value="{{ old('uni_website', $setting->uni_website) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <x-input-error :messages="$errors->get('uni_website')" class="mt-2" />
                     </div>
 
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">Simpan Pengaturan</button>

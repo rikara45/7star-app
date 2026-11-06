@@ -95,6 +95,35 @@ memakai WIB. Backfill hanya perlu dilakukan bila tanggal lama memang harus tampi
 php artisan storage:link
 ```
 
+Pastikan `public/storage` adalah symlink hasil perintah di atas, bukan folder salinan. Bila
+sebelumnya berupa folder salinan, pindahkan isinya lalu hapus foldernya.
+
+Portofolio **tidak boleh** disimpan di disk `public` (`storage/app/public/portfolios`), karena
+symlink akan menyajikannya sebagai file statis tanpa cek policy. Unggahan baru memakai disk `local`,
+dan `public/.htaccess` menolak `/storage/portfolios/` sebagai lapisan kedua.
+
+Bila instalasi lama masih punya berkas di disk publik, pindahkan dulu ke disk privat:
+
+```bash
+mkdir -p storage/app/private/portfolios
+mv storage/app/public/portfolios/* storage/app/private/portfolios/
+rmdir storage/app/public/portfolios
+```
+
+Di Nginx (termasuk Coolify), tambahkan aturan yang sama karena `.htaccess` tidak dibaca:
+
+```nginx
+location ^~ /storage/portfolios/ { return 404; }
+```
+
+Setelah deploy, cek berkas portofolio yang sudah ada:
+
+```bash
+curl -I https://domain-anda/storage/portfolios/<nama-berkas>.pdf
+```
+
+Respons harus `404`. Bila masih `200`, berkas belum dipindahkan dari disk publik.
+
 Pastikan folder berikut dapat ditulis oleh user web server:
 
 - `storage/`

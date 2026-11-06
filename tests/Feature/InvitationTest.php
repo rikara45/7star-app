@@ -78,6 +78,21 @@ class InvitationTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_email_pengundang_tidak_bisa_diundang_sebagai_penilai(): void
+    {
+        Mail::fake();
+        $dosen = $this->dosen();
+
+        $this->actingAs($dosen)
+            ->from(route('dashboard.index'))
+            ->post(route('dashboard.invite'), $this->payload('peer', Str::upper($dosen->email)))
+            ->assertRedirect(route('dashboard.index'))
+            ->assertSessionHas('error', 'Anda tidak dapat mengundang diri sendiri sebagai penilai.');
+
+        $this->assertSame(0, AssessmentRequest::count());
+        Mail::assertNothingSent();
+    }
+
     public function test_undangan_tersimpan_dan_email_dikirim(): void
     {
         Mail::fake();
@@ -125,7 +140,7 @@ class InvitationTest extends TestCase
             ->from(route('dashboard.index'))
             ->post(route('dashboard.invite'), $this->payload('superior', 'gagal@example.test'))
             ->assertRedirect(route('dashboard.index'))
-            ->assertSessionHas('success', 'Undangan dibuat, tapi Email gagal terkirim. Silakan bagikan Link Manual.');
+            ->assertSessionHas('success', 'Undangan dibuat, tapi email gagal terkirim. Hapus undangan ini lalu buat ulang untuk mencoba lagi.');
 
         $this->assertSame(1, AssessmentRequest::count());
         Log::shouldHaveReceived('error')

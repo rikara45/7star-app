@@ -1,3 +1,7 @@
+# Portofolio disajikan lewat route terotorisasi (policy), bukan sebagai file statis.
+# Berlaku juga bila storage:link membuat /storage dapat diakses publik.
+RedirectMatch 404 ^/storage/portfolios/
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

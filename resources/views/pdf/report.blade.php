@@ -94,7 +94,7 @@
         <tr>
             <td class="logo-cell">
                 @if($setting->uni_logo_path)
-                    <img src="{{ public_path('storage/' . $setting->uni_logo_path) }}" class="logo-img">
+                    <img src="{{ Storage::disk('public')->path($setting->uni_logo_path) }}" class="logo-img">
                 @endif
             </td>
             <td class="text-cell">
