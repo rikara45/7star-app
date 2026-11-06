@@ -142,7 +142,7 @@
 
     <div class="section-title">Analisis & Rekomendasi AI</div>
     <div class="content-text">
-        {!! \Illuminate\Support\Str::markdown($analysis->ai_narrative) !!}
+        {!! \App\Support\NarrativeMarkdown::toHtml($analysis->ai_narrative) !!}
     </div>
 
     <div class="footer">
