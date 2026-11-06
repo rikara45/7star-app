@@ -28,3 +28,12 @@ Thumbs.db
 
 # Artefak graphify (hasil generate, bukan sumber)
 /graphify-out
+
+# Dokumen kerja & artefak agen (lokal, bukan bagian aplikasi)
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+/.opencode
+/.superpowers
+/specs
+/logs
